@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'dart:io';
 
@@ -7,57 +6,29 @@ import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MaterialApp(home: MyHome()));
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyHome extends StatelessWidget {
+  const MyHome({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return Scaffold(
+      appBar: AppBar(title: const Text('Flutter Demo Home Page')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const QRViewExample(),
+            ));
+          },
+          child: const Text('qrView'),
+        ),
       ),
-      home: const QRViewExample()//const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(title: const Text('Flutter Demo Home Page')),
-  //     body: Center(
-  //       child: ElevatedButton(
-  //         onPressed: () {
-  //           Navigator.of(context).push(MaterialPageRoute(
-  //             builder: (context) => const QRViewExample(),
-  //           ));
-  //         },
-  //         child: const Text('qrView'),
-  //       ),
-  //     ),
-  //   );
-  // }
-
 }
+
 class QRViewExample extends StatefulWidget {
   const QRViewExample({Key? key}) : super(key: key);
 
@@ -69,6 +40,8 @@ class _QRViewExampleState extends State<QRViewExample> {
   Barcode? result;
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  bool dialogOpen = false;
+
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -86,206 +59,163 @@ class _QRViewExampleState extends State<QRViewExample> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          Expanded(flex: 4,
-              child: _buildQrView(context)),
+          _buildQrView(context),
           Align(
-            alignment: Alignment.bottomCenter,
-            child: Expanded(
-              flex: 1,
-              //child: _buildTransparentOverlayBottomSheet()
-              child: Container(
-                //margin: EdgeInsets.only(bottom: 30),
-                height: 200,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.only(topLeft:Radius.circular(33),topRight: Radius.circular(33)),
-                  //color: Color(0x41205ac4)
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Color(0xb21c59d5), // Starting color
-                      Colors.transparent, // Ending color
-                    ],
-                  ),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      // if (result != null)
-                      //   Text(
-                      //       'Barcode Type: ${describeEnum(result!.format)}   Data: ${result!.code}',style: TextStyle(color: Colors.white),)
-                      // else
-                      //   const Text('Scan a code',style: TextStyle(color: Colors.white),),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            margin: const EdgeInsets.all(8),
-                            child: ElevatedButton(
-
-                                style: ElevatedButton.styleFrom(
-                                  elevation: 0,
-                                  backgroundColor: Colors.transparent, // Background color
-                                  // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10), // Border radius
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  await controller?.toggleFlash();
-                                  setState(() {});
-                                },
-                                child: FutureBuilder(
-                                  future: controller?.getFlashStatus(),
-                                  builder: (context, snapshot) {
-                                    return Icon(Icons.flash_on,color: Colors.white,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
-                                  },
-                                )),
-                          ),
-                          Column(
-                            children: [
-                              GestureDetector(
-                                onVerticalDragEnd: (details) {
-                                  // Check if the swipe is upwards
-                                  if (details.primaryVelocity! < 0) {
-                                    // Show the bottom sheet
-                                    _showBottomSheet(context);
-                                  }
-                                },
-                                child: const IconButton(
-                                  onPressed: null,
-                                  //(){_showBottomSheet(context);},
-                                  icon: Icon(Icons.expand_less,color: Colors.white,),),
-                              ),
-                              const Text('Scan History',style: TextStyle(color: Colors.white),)
-                            ],
-                          ),
-                          Container(
-                            margin: const EdgeInsets.all(8),
-                            child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  elevation: 0,
-                                  backgroundColor: Colors.transparent, // Background color
-                                  // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10), // Border radius
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  await controller?.flipCamera();
-                                  setState(() {});
-                                },
-                                child: FutureBuilder(
-                                  future: controller?.getCameraInfo(),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.data != null) {
-                                      return Icon(Icons.cameraswitch,color: Colors.white,);
-                                        //Text('Camera facing ${describeEnum(snapshot.data!)}',style: const TextStyle(color: Colors.white),);
-                                    } else {
-                                      return const Text('loading');
-                                    }
-                                  },
-                                )),
-                          )
-                        ],
-                      ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.center,
-                      //   crossAxisAlignment: CrossAxisAlignment.center,
-                      //   children: <Widget>[
-                      //     Container(
-                      //       margin: const EdgeInsets.all(8),
-                      //       child: ElevatedButton(
-                      //         style: ElevatedButton.styleFrom(
-                      //           elevation: 0,
-                      //           backgroundColor: Colors.transparent, // Background color
-                      //           // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                      //           shape: RoundedRectangleBorder(
-                      //             borderRadius: BorderRadius.circular(10), // Border radius
-                      //           ),
-                      //         ),
-                      //         onPressed: () async {
-                      //           await controller?.pauseCamera();
-                      //         },
-                      //         child: const Text('pause',
-                      //             style: TextStyle(fontSize: 20,color: Colors.white),),
-                      //       ),
-                      //     ),
-                      //     Container(
-                      //       margin: const EdgeInsets.all(8),
-                      //       child: ElevatedButton(
-                      //         style: ElevatedButton.styleFrom(
-                      //           elevation: 0,
-                      //           backgroundColor: Colors.transparent, // Background color
-                      //           // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                      //           shape: RoundedRectangleBorder(
-                      //             borderRadius: BorderRadius.circular(10), // Border radius
-                      //           ),
-                      //         ),
-                      //         onPressed: () async {
-                      //           await controller?.resumeCamera();
-                      //         },
-                      //         child: const Text('resume',
-                      //             style: TextStyle(fontSize: 20,color: Colors.white)),
-                      //       ),
-                      //     )
-                      //   ],
-                      // ),
-                    ],
-                  ),
+            alignment:Alignment.bottomCenter,
+            child:
+            Container(
+              alignment: Alignment.bottomCenter,
+              height: 120,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(topLeft:Radius.circular(33),topRight: Radius.circular(33)),
+                //color: Color(0x41205ac4)
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color(0xb21c59d5), // Starting color
+                    Colors.transparent, // Ending color
+                  ],
                 ),
               ),
+              child:Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ElevatedButton(
+
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: Colors.transparent, // Background color
+                        // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10), // Border radius
+                        ),
+                      ),
+                      onPressed: () async {
+                        await controller?.toggleFlash();
+                        setState(() {});
+                      },
+                      child: FutureBuilder(
+                        future: controller?.getFlashStatus(),
+                        builder: (context, snapshot) {
+                          return const Icon(Icons.flash_on,color: Colors.white,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
+                        },
+                      )),
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onVerticalDragEnd: (details) {
+                          // Check if the swipe is upwards
+                          if (details.primaryVelocity! < 0) {
+                            // Show the bottom sheet
+                            _showBottomSheet(context);
+                          }
+                        },
+                        child: const IconButton(
+                          onPressed: null,
+                          //(){_showBottomSheet(context);},
+                          icon: Icon(Icons.expand_less,color: Colors.white,),),
+                      ),
+                      const Text('Scan History',style: TextStyle(color: Colors.white),)
+                    ],
+                  ),
+                  ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: Colors.transparent, // Background color
+                        // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10), // Border radius
+                        ),
+                      ),
+                      onPressed: () async {
+                        await controller?.flipCamera();
+                        setState(() {});
+                      },
+                      child: FutureBuilder(
+                        future: controller?.getCameraInfo(),
+                        builder: (context, snapshot) {
+                          if (snapshot.data != null) {
+                            return const Icon(Icons.cameraswitch,color: Colors.white,);
+                            //Text('Camera facing ${describeEnum(snapshot.data!)}',style: const TextStyle(color: Colors.white),);
+                          } else {
+                            return const Text('loading');
+                          }
+                        },
+                      )),                ],
+              ),
+
             ),
-          )
+          ),
+
+
         ],
       ),
     );
   }
-  Widget _buildQrScannerView() {
-    return QRView(
-      key: qrKey,
-      onQRViewCreated: _onQRViewCreated,
-    );
-  }
+
 
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
+
       isScrollControlled: true,
       context: context,
+
+      //scrollControlDisabledMaxHeightRatio: 800,//MediaQuery.of(context).size.height * 3 / 4,
+
       builder: (BuildContext context) {
-        return SafeArea(
-          child: Container(
-            width: double.infinity,
-            color: const Color(0xb21c59d5),
-            height: double.infinity,
-            // Your container content goes here
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Bottom Sheet Modal Content',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
+        return Column(
+          children: [
+            const SizedBox(height: 40,),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: Colors.transparent, // Background color
+                      // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10), // Border radius
+                      ),
+                    ),
+                    onPressed: () async {
+                      await controller?.toggleFlash();
+                      setState(() {});
+                    },
+                    child: FutureBuilder(
+                      future: controller?.getFlashStatus(),
+                      builder: (context, snapshot) {
+                        return const Icon(Icons.flash_on,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
+                      },
+                    )),
+                const Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.expand_more),
+                      Row(
+                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(Icons.history),
+                          SizedBox(width: 6,),
+                          Text('Scan History',style: TextStyle(color: Colors.black),),
+                        ],
+                      )
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10.0),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle button click inside the bottom sheet
-                    Navigator.of(context).pop(); // Close the bottom sheet
-                  },
-                  child: const Text('Close Bottom Sheet'),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.settings_applications),
                 ),
               ],
             ),
-          ),
+
+          ],
         );
       },
     );
@@ -347,25 +277,40 @@ class _QRViewExampleState extends State<QRViewExample> {
       setState(() {
         result = scanData;
       });
-      _showDialog(context,scanData.code!);
-      //_launchURL(scanData.code!);
-      print("aditya"+scanData.code!);
+      if(!dialogOpen){
+        _showDialog(context,scanData.code!);
+        setState(() {
+          dialogOpen = true;
+        });
+      }
+      print("aditya"+scanData.code!.toString());
     });
   }
 
   void _showDialog(BuildContext context,String url) {
+    print('Aditya reached');
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Dialog Title'),
-          content: Text('This is the content of the dialog box.'),
+          title: const Text('Dialog Title'),
+          content: Text(url),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                _launchURL(url);
+
               },
-              child: Text('Close'),
+              child: const Text('Visit Url'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  dialogOpen = false;
+                });
+                Navigator.of(context).pop();// Close the dialog
+              },
+              child: const Text('Close'),
             ),
           ],
         );
@@ -401,90 +346,3 @@ class _QRViewExampleState extends State<QRViewExample> {
     super.dispose();
   }
 }
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
-//
-//   // This widget is the home page of your application. It is stateful, meaning
-//   // that it has a State object (defined below) that contains fields that affect
-//   // how it looks.
-//
-//   // This class is the configuration for the state. It holds the values (in this
-//   // case the title) provided by the parent (in this case the App widget) and
-//   // used by the build method of the State. Fields in a Widget subclass are
-//   // always marked "final".
-//
-//   final String title;
-//
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
-//
-// class _MyHomePageState extends State<MyHomePage> {
-//   int _counter = 0;
-//
-//   void _incrementCounter() {
-//     setState(() {
-//       // This call to setState tells the Flutter framework that something has
-//       // changed in this State, which causes it to rerun the build method below
-//       // so that the display can reflect the updated values. If we changed
-//       // _counter without calling setState(), then the build method would not be
-//       // called again, and so nothing would appear to happen.
-//       _counter++;
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     // This method is rerun every time setState is called, for instance as done
-//     // by the _incrementCounter method above.
-//     //
-//     // The Flutter framework has been optimized to make rerunning build methods
-//     // fast, so that you can just rebuild anything that needs updating rather
-//     // than having to individually change instances of widgets.
-//     return Scaffold(
-//       appBar: AppBar(
-//         // TRY THIS: Try changing the color here to a specific color (to
-//         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-//         // change color while the other colors stay the same.
-//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//         // Here we take the value from the MyHomePage object that was created by
-//         // the App.build method, and use it to set our appbar title.
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         // Center is a layout widget. It takes a single child and positions it
-//         // in the middle of the parent.
-//         child: Column(
-//           // Column is also a layout widget. It takes a list of children and
-//           // arranges them vertically. By default, it sizes itself to fit its
-//           // children horizontally, and tries to be as tall as its parent.
-//           //
-//           // Column has various properties to control how it sizes itself and
-//           // how it positions its children. Here we use mainAxisAlignment to
-//           // center the children vertically; the main axis here is the vertical
-//           // axis because Columns are vertical (the cross axis would be
-//           // horizontal).
-//           //
-//           // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-//           // action in the IDE, or press "p" in the console), to see the
-//           // wireframe for each widget.
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             const Text(
-//               'You have pushed the button this many times:',
-//             ),
-//             Text(
-//               '$_counter',
-//               style: Theme.of(context).textTheme.headlineMedium,
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _incrementCounter,
-//         tooltip: 'Increment',
-//         child: const Icon(Icons.add),
-//       ), // This trailing comma makes auto-formatting nicer for build methods.
-//     );
-//   }
-// }

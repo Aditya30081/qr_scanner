@@ -17,6 +17,7 @@
         </intent>
     </queries>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="qr_scanner"
         android:name="${applicationName}"
