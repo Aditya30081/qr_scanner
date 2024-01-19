@@ -1,12 +1,17 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:qr_scanner/test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void main() => runApp(const MaterialApp(home: MyHome()));
+
+
+void main() => runApp(const MaterialApp(home: QRViewExample()));
 
 class MyHome extends StatelessWidget {
   const MyHome({Key? key}) : super(key: key);
@@ -41,6 +46,9 @@ class _QRViewExampleState extends State<QRViewExample> {
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   bool dialogOpen = false;
+  late SharedPreferences prefs;
+  List<Map<String, dynamic>> jsonDataList = [];
+  bool historyItemTapped = false;
 
 
   // In order to get hot reload to work we need to pause the camera if the platform
@@ -53,6 +61,38 @@ class _QRViewExampleState extends State<QRViewExample> {
     }
     controller!.resumeCamera();
   }
+
+
+  Future<List<Map<String, dynamic>>> loadJsonDataList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStringList = prefs.getStringList('myJsonDataList') ?? [];
+
+    return jsonStringList.map((jsonString) => Map<String, dynamic>.from(json.decode(jsonString))).toList();
+  }
+  Future<void> saveJsonDataList(List<Map<String, dynamic>> dataList) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStringList = dataList.map((data) => json.encode(data)).toList();
+
+    await prefs.setStringList('myJsonDataList', jsonStringList);
+  }
+
+  Future<void> addJsonDataToList(Map<String, dynamic> newData) async {
+    final updatedList = List<Map<String, dynamic>>.from(jsonDataList);
+    updatedList.add(newData);
+
+    setState(() {
+      jsonDataList = updatedList;
+    });
+
+    await saveJsonDataList(updatedList);
+  }
+    @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadJsonDataList();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -214,12 +254,51 @@ class _QRViewExampleState extends State<QRViewExample> {
                 ),
               ],
             ),
+            // DynamicBottomSheet()
+
+
+            !historyItemTapped ?
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: loadJsonDataList(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  List<Map<String, dynamic>> loadedList = snapshot.data as List<Map<String, dynamic>> ?? [];
+                  return Column(
+                    children: [
+                      Text('Loaded JSON Data List:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      for (Map<String, dynamic> item in loadedList) GestureDetector(
+                          onTap:(){
+                            setState(() {
+                              historyItemTapped = true;
+                            });
+                            setState(() {
+
+                            });
+                            print('historyItemTapped'+historyItemTapped.toString());
+                          },
+                          child: Text(item.toString())),
+                    ],
+                  );
+                }
+              },
+            ) : Container(child:Text('itemTapped'))
 
           ],
         );
       },
     );
   }
+
+
+
+
+
+
+
   // Widget _buildTransparentOverlayBottomSheet() {
   //   return Positioned(
   //     bottom: 0,
@@ -269,7 +348,7 @@ class _QRViewExampleState extends State<QRViewExample> {
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
+  void _onQRViewCreated(QRViewController controller){
     setState(() {
       this.controller = controller;
     });
@@ -277,24 +356,125 @@ class _QRViewExampleState extends State<QRViewExample> {
       setState(() {
         result = scanData;
       });
+      //_showDialog(context,scanData.code!);
       if(!dialogOpen){
-        _showDialog(context,scanData.code!);
         setState(() {
           dialogOpen = true;
         });
+        String type = '';
+        if(scanData.code!.contains('VCARD')){
+          type = 'VCARD';
+        }
+        else if(scanData.code!.startsWith('https://')){
+          type = 'WebUrl';
+        }
+        else if(scanData.code!.startsWith('WIFI')){
+          type = 'WIFI';
+        }
+        _showDialog(context,scanData.code!,type);
+
+
+
       }
-      print("aditya"+scanData.code!.toString());
+      print("aditya${scanData.code!} type ${scanData.format}");
     });
   }
+  // String vcardString =
+  //     "BEGIN:VCARD\nVERSION:3.0\nN:raheja;adityanand \nFN:adityanand  raheja\nTEL;CELL:8766257408\nEMAIL;WORK;INTERNET:adityanand.raheja@unibots.com\nEND:VCARD";
 
-  void _showDialog(BuildContext context,String url) {
-    print('Aditya reached');
+  Map<String, dynamic> vCardToJSON(String vCardData) {
+    // Split vCard data into lines
+    List<String> lines = vCardData.split('\n');
+
+    // Initialize an empty JSON object
+    Map<String, dynamic> jsonResult = {};
+
+    // Iterate through each line in vCard
+    for (String line in lines) {
+      // Split each line into key and value
+      List<String> parts = line.split(':');
+
+      if (parts.length == 2) {
+        String key = parts[0].trim();
+        String value = parts[1].trim();
+
+        // Handle specific cases, you may need to customize this based on your needs
+        if (key == 'N') {
+          // Split the name into parts
+          List<String> nameParts = value.split(';');
+          jsonResult['firstName'] = nameParts[1].trim();
+          jsonResult['lastName'] = nameParts[0].trim();
+        } else {
+          // Store other fields directly
+          jsonResult[key] = value;
+        }
+      }
+    }
+
+    return jsonResult;
+  }
+
+  Map<String, dynamic> wifiToJSON(String wifiData) {
+    // Remove the prefix "WIFI:"
+    wifiData = wifiData.substring(5);
+
+    // Split wifiData into key-value pairs
+    List<String> pairs = wifiData.split(';');
+
+    // Initialize an empty JSON object
+    Map<String, dynamic> jsonResult = {};
+
+    // Iterate through each key-value pair
+    for (String pair in pairs) {
+      // Split each pair into key and value
+      List<String> keyValue = pair.split(':');
+
+      if (keyValue.length == 2) {
+        String key = keyValue[0].trim();
+        String value = keyValue[1].trim();
+
+        // Handle specific cases, you may need to customize this based on your needs
+        if (key == 'S') {
+          jsonResult['ssid'] = value;
+        } else if (key == 'P') {
+          jsonResult['password'] = value;
+        } else if (key == 'H') {
+          jsonResult['hidden'] = value == 'true';
+        } else {
+          // Store other fields directly
+          jsonResult[key] = value;
+        }
+      }
+    }
+
+    return jsonResult;
+  }
+
+  void _showDialog(BuildContext context,String url,String type)  async{
+    Map<String, dynamic> jsonResult;
+    if(type == 'VCARD'){
+      jsonResult= vCardToJSON(url);
+
+      print("jsonResult$jsonResult");
+      print("jsonResult${jsonResult["lastName"]}");
+    }
+    else if( type == 'WebUrl'){
+      jsonResult = {'Web Url': url};
+    }
+    else if( type == 'WIFI'){
+      jsonResult = wifiToJSON(url);
+    }
+    else {
+      jsonResult = {'Blank': ''};
+    }
+    print("TYPE: $type");
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Dialog Title'),
-          content: Text(url),
+          content: Text(jsonResult.toString()),
           actions: [
             TextButton(
               onPressed: () {
@@ -316,6 +496,8 @@ class _QRViewExampleState extends State<QRViewExample> {
         );
       },
     );
+    await addJsonDataToList(jsonResult);
+
   }
 
   void _launchURL(String url) async {
@@ -344,5 +526,72 @@ class _QRViewExampleState extends State<QRViewExample> {
   void dispose() {
     controller?.dispose();
     super.dispose();
+  }
+}
+
+class DynamicBottomSheet extends StatefulWidget {
+  @override
+  _DynamicBottomSheetState createState() => _DynamicBottomSheetState();
+}
+
+class _DynamicBottomSheetState extends State<DynamicBottomSheet> {
+  List<Widget> items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initial items
+    items = [
+      ListTile(
+        leading: Icon(Icons.ac_unit),
+        title: Text('Item 1'),
+        onTap: () {
+          // Handle tap for Item 1
+        },
+      ),
+      ListTile(
+        leading: Icon(Icons.access_alarm),
+        title: Text('Item 2'),
+        onTap: () {
+          // Handle tap for Item 2
+        },
+      ),
+    ];
+  }
+
+  void _updateItems() {
+    // Change items based on a condition
+    setState(() {
+      items = [
+        ListTile(
+          leading: Icon(Icons.directions_car),
+          title: Text('Car'),
+          onTap: () {
+            // Handle tap for Car
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.directions_bike),
+          title: Text('Bike'),
+          onTap: () {
+            // Handle tap for Bike
+          },
+        ),
+      ];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: _updateItems,
+          child: Text('Change Items'),
+        ),
+        // Display dynamic items in the bottom sheet
+        ...items,
+      ],
+    );
   }
 }
