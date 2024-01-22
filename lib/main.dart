@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:qr_scanner/test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -156,7 +156,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                         child: const IconButton(
                           onPressed: null,
                           //(){_showBottomSheet(context);},
-                          icon: Icon(Icons.expand_less,color: Colors.white,),),
+                          icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
                       ),
                       const Text('Scan History',style: TextStyle(color: Colors.white),)
                     ],
@@ -262,14 +262,14 @@ class _QRViewExampleState extends State<QRViewExample> {
               future: loadJsonDataList(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return const CircularProgressIndicator();
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else {
                   List<Map<String, dynamic>> loadedList = snapshot.data as List<Map<String, dynamic>> ?? [];
                   return Column(
                     children: [
-                      Text('Loaded JSON Data List:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Loaded JSON Data List:', style: TextStyle(fontWeight: FontWeight.bold)),
                       for (Map<String, dynamic> item in loadedList) GestureDetector(
                           onTap:(){
                             setState(() {
@@ -285,7 +285,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                   );
                 }
               },
-            ) : Container(child:Text('itemTapped'))
+            ) : Container(child:const Text('itemTapped'))
 
           ],
         );
@@ -373,8 +373,6 @@ class _QRViewExampleState extends State<QRViewExample> {
         }
         _showDialog(context,scanData.code!,type);
 
-
-
       }
       print("aditya${scanData.code!} type ${scanData.format}");
     });
@@ -404,7 +402,12 @@ class _QRViewExampleState extends State<QRViewExample> {
           List<String> nameParts = value.split(';');
           jsonResult['firstName'] = nameParts[1].trim();
           jsonResult['lastName'] = nameParts[0].trim();
-        } else {
+        } else if (key.contains('TEL;')){
+          jsonResult['TEL'] = value;
+        } else if (key.contains('EMAIL;')){
+          jsonResult['EMAIL'] = value;
+        }
+        else {
           // Store other fields directly
           jsonResult[key] = value;
         }
@@ -473,9 +476,163 @@ class _QRViewExampleState extends State<QRViewExample> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Text(jsonResult.toString()),
-          actions: [
+          // title: const Text('Dialog Title'),
+          content: Container(
+            margin: EdgeInsets.only(top: 10),
+            width: MediaQuery.of(context).size.width * 3/4,
+            height: MediaQuery.of(context).size.height * 3/4,
+              child: Column(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 15),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Contact", style: TextStyle(fontSize: 20)),
+                          GestureDetector(
+                            child: Icon(Icons.close),
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          )
+                        ]),
+                  ),
+                ),
+                Flexible(
+                  flex: 4,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('Name', style: TextStyle(fontSize: 20)),
+                            Text('Number', style: TextStyle(fontSize: 20)),
+                            Text('Email', style: TextStyle(fontSize: 20)),
+                            // Text('Address', style: TextStyle(fontSize: 20)),
+                          ],
+                        ),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(': ', style: TextStyle(fontSize: 20)),
+                            Text(': ', style: TextStyle(fontSize: 20)),
+                            Text(': ', style: TextStyle(fontSize: 20)),
+                            // Text(': ', style: TextStyle(fontSize: 20)),
+                          ],
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(jsonResult["FN"], style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["TEL"], style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["EMAIL"], style: TextStyle(fontSize: 20)),
+                              // Text(jsonResult[""],
+                              //     style: TextStyle(fontSize: 20),
+                              //   softWrap: true,
+                              // ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Flexible(flex: 4,
+                    child: SizedBox(
+                      width: 300,
+                      height: 250,
+                    )),
+                Flexible(
+                  flex: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Flexible(
+                        flex: 1,
+                        child: Container(
+                          width: 80,
+                          padding: EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Colors.blue, // Background color
+                              border: Border.all(
+                                color: Colors.blue, // Border color
+                                width: 2.0, // Border width
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                  8.0), // Adjust the border radius
+                            ),
+                            child: GestureDetector(onTap: () {
+                              // call method channel
+                            },
+                                child: Icon(Icons.call))),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        child: Container(
+                            width: 80,
+                            padding: EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Colors.blue, // Background color
+                              border: Border.all(
+                                color: Colors.blue, // Border color
+                                width: 2.0, // Border width
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                  8.0), // Adjust the border radius
+                            ),
+                            child: Icon(Icons.call)),
+                      ),
+                      Flexible(
+                        flex: 1,
+                        child: Container(
+                            width: 80,
+                            padding: EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Colors.blue, // Background color
+                              border: Border.all(
+                                color: Colors.blue, // Border color
+                                width: 2.0, // Border width
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                  8.0), // Adjust the border radius
+                            ),
+                            child: Icon(Icons.call)),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 40),
+                      alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.blue, // Border color
+                        width: 2.0, // Border width
+                      ),
+                      borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
+                    ),
+                        width: 300,
+                        height: 50,
+                        child: Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                  ),
+                )
+              ],
+            ),
+          ),
+          /*actions: [
             TextButton(
               onPressed: () {
                 _launchURL(url);
@@ -492,11 +649,11 @@ class _QRViewExampleState extends State<QRViewExample> {
               },
               child: const Text('Close'),
             ),
-          ],
+          ],*/
         );
       },
     );
-    await addJsonDataToList(jsonResult);
+    // await addJsonDataToList(jsonResult);
 
   }
 
@@ -543,15 +700,15 @@ class _DynamicBottomSheetState extends State<DynamicBottomSheet> {
     // Initial items
     items = [
       ListTile(
-        leading: Icon(Icons.ac_unit),
-        title: Text('Item 1'),
+        leading: const Icon(Icons.ac_unit),
+        title: const Text('Item 1'),
         onTap: () {
           // Handle tap for Item 1
         },
       ),
       ListTile(
-        leading: Icon(Icons.access_alarm),
-        title: Text('Item 2'),
+        leading: const Icon(Icons.access_alarm),
+        title: const Text('Item 2'),
         onTap: () {
           // Handle tap for Item 2
         },
@@ -564,15 +721,15 @@ class _DynamicBottomSheetState extends State<DynamicBottomSheet> {
     setState(() {
       items = [
         ListTile(
-          leading: Icon(Icons.directions_car),
-          title: Text('Car'),
+          leading: const Icon(Icons.directions_car),
+          title: const Text('Car'),
           onTap: () {
             // Handle tap for Car
           },
         ),
         ListTile(
-          leading: Icon(Icons.directions_bike),
-          title: Text('Bike'),
+          leading: const Icon(Icons.directions_bike),
+          title: const Text('Bike'),
           onTap: () {
             // Handle tap for Bike
           },
@@ -587,7 +744,7 @@ class _DynamicBottomSheetState extends State<DynamicBottomSheet> {
       children: [
         ElevatedButton(
           onPressed: _updateItems,
-          child: Text('Change Items'),
+          child: const Text('Change Items'),
         ),
         // Display dynamic items in the bottom sheet
         ...items,
