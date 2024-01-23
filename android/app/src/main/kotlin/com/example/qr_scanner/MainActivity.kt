@@ -1,9 +1,15 @@
 package com.example.qr_scanner
 
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.net.wifi.WifiConfiguration
+import android.net.wifi.WifiManager
 import android.provider.ContactsContract
-import android.widget.Toast
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -15,6 +21,7 @@ class MainActivity : FlutterActivity() {
     private val intentCall = "INTENT_CALL"
     private val intentAddContacts = "INTENT_ADD_CONTACTS"
     private val intentShare = "INTENT_SHARE"
+    private val intentWifi = "INTENT_WIFI"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
@@ -24,6 +31,7 @@ class MainActivity : FlutterActivity() {
         val intentAddContacts =
             MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentAddContacts)
         val intentShare = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentShare)
+        val intentWifi = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentWifi)
 
         intentEmail.setMethodCallHandler { call, _ ->
 
@@ -69,14 +77,14 @@ class MainActivity : FlutterActivity() {
                 val emailMap = call.arguments as Map<*, *>
                 val phone = emailMap["phone"] as String
 
-                val intent = Intent(Intent.ACTION_DIAL, Uri.parse(phone))
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                } else {
-                    // Handle the case where there's no app to handle the action
-                    Toast.makeText(this, "No app to handle the action", Toast.LENGTH_SHORT).show()
-                }
+                if (ContextCompat.checkSelfPermission(this,android.Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CALL_PHONE),
+                        200)
 
+                } else {
+                    val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:$phone"))
+                    startActivity(intent)
+                }
             }
         }
 
@@ -105,20 +113,83 @@ class MainActivity : FlutterActivity() {
         intentShare.setMethodCallHandler { call, _ ->
             if (call.method == "SHARE") {
                 val emailMap = call.arguments as Map<*, *>
-                val phone = emailMap["phone"] as String
-                val email = emailMap["email"] as String
-                val name = emailMap["name"] as String
-
+                val type = emailMap["type"] as String
                 val shareIntent = Intent(Intent.ACTION_SEND)
-                shareIntent.type = "text/plain"
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share QR Information") // Optional subject
-                shareIntent.putExtra(
-                    Intent.EXTRA_TEXT, "Name: $name\n Number: $phone\nEmail: $email"
-                )
+
+                if (type == "Contact") {
+                    val phone = emailMap["phone"] as String
+                    val email = emailMap["email"] as String
+                    val name = emailMap["name"] as String
+
+                    shareIntent.type = "text/plain"
+                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share QR Information") // Optional subject
+                    shareIntent.putExtra(
+                        Intent.EXTRA_TEXT, "Name: $name\n Number: $phone\nEmail: $email"
+                    )
+                } else if (type == "WIFI") {
+                    val ssid = emailMap["ssid"] as String
+                    val password = emailMap["password"] as String
+
+                    shareIntent.type = "text/plain"
+                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share WIFI Information") // Optional subject
+                    shareIntent.putExtra(
+                        Intent.EXTRA_TEXT, "SSID: $ssid\nPassword:$password"
+                    )
+                } else if (type == "URL") {
+                    val url = emailMap["url"] as String
+
+                    shareIntent.type = "text/plain"
+                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share QR Information") // Optional subject
+                    shareIntent.putExtra(
+                        Intent.EXTRA_TEXT, "URL: $url"
+                    )
+                }
 
                 startActivity(Intent.createChooser(shareIntent, "Share via"))
             }
         }
 
+        intentWifi.setMethodCallHandler { call, result ->
+            if (call.method.equals("connectToWiFi")) {
+                val wifiMap = call.arguments as Map<*, *>
+                val ssid: String = wifiMap["ssid"] as String
+                val password: String = wifiMap["password"] as String
+                println("password"+password)
+                connectToWifi(ssid, password)
+            } else {
+                result.notImplemented()
+            }
+        }
+
+    }
+
+    fun connectToWifi(ssid: String, password: String) {
+        val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
+        // Check if Wi-Fi is enabled
+        if (!wifiManager.isWifiEnabled) {
+            wifiManager.isWifiEnabled = true
+        }
+
+        // Create a WifiConfiguration for the network
+        val wifiConfig = WifiConfiguration()
+        wifiConfig.SSID = "\"$ssid\""
+        wifiConfig.preSharedKey = "\"$password\""
+
+        // Add the network configuration and enable it
+        val networkId = wifiManager.addNetwork(wifiConfig)
+        if (networkId != -1) {
+            // Disconnect from the current network (optional)
+            wifiManager.disconnect()
+
+            // Enable the network
+            wifiManager.enableNetwork(networkId, true)
+
+            // Reconnect to the selected network
+            wifiManager.reconnect()
+            Log.d("WifiConnector", "Connected to $ssid")
+        } else {
+            Log.e("WifiConnector", "Failed to add network configuration")
+        }
     }
 }

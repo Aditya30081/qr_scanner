@@ -60,6 +60,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelPhone = const MethodChannel("INTENT_CALL");
   var channelContacts = const MethodChannel("INTENT_ADD_CONTACTS");
   var channelShare = const MethodChannel("INTENT_SHARE");
+  var channelWifi = const MethodChannel("INTENT_WIFI");
 
 
   // In order to get hot reload to work we need to pause the camera if the platform
@@ -903,6 +904,8 @@ class _QRViewExampleState extends State<QRViewExample> {
           jsonResult['TEL'] = value;
         } else if (key.contains('EMAIL;')){
           jsonResult['EMAIL'] = value;
+        } else if (key.contains('FN;')){
+          jsonResult['FN'] = value;
         }
         else {
           // Store other fields directly
@@ -1062,9 +1065,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                     ],
                   ),
                 ),
-                const Flexible(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                Visibility(
+                  visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
+                  child: Flexible(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:() {
+                        callShareIntentURL(jsonResult['Web Url'], jsonResult["type"]);
+                      }, child: Text('Share'))),
+                )
               ],
             ),
           ),
@@ -1116,19 +1124,19 @@ class _QRViewExampleState extends State<QRViewExample> {
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                     flex: 3,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text('SSID'),
                             Text('Password'),
                           ],
                         ),
-                        Padding(
+                        const Padding(
                           padding: EdgeInsets.only(left: 8,right: 8),
                           child: Column(
                             children: [
@@ -1139,8 +1147,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Aditya'),
-                            Text('Adityanand'),
+                            Text(jsonResult['ssid'] ?? ''),
+                            Text(jsonResult['password'] ?? ''),
                           ],
                         ),
                       ],
@@ -1151,21 +1159,34 @@ class _QRViewExampleState extends State<QRViewExample> {
                     height: (MediaQuery.of(context).size.height * 3/4)/3,
                   ),
                 ),
-                const Expanded(
-                  flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ElevatedButton(onPressed:null, child: Text('Connect')),
-                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                    ],
+                Visibility(
+                  visible: (jsonResult['ssid'] != null && jsonResult['ssid'] != '')
+                      && (jsonResult['password'] != null && jsonResult['password'] != ''),
+                  child: Expanded(
+                    flex: 1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        ElevatedButton(onPressed: () {
+                          print("object" + jsonResult['ssid']);
+                          callWifiIntent(jsonResult['ssid'], jsonResult['password']);
+                        }, child: Text('Connect')),
+                        ElevatedButton(onPressed:null, child: Text('Copy')),
+                      ],
+                    ),
                   ),
                 ),
-                const Flexible(
-                    flex: 1,
-                    child: Align(
-                        alignment: Alignment.center,
-                        child: ElevatedButton(onPressed:null, child: Text('Share'))))
+                Visibility(
+                  visible: (jsonResult['ssid'] != null && jsonResult['ssid'] != '')
+                      && (jsonResult['password'] != null && jsonResult['password'] != ''),
+                  child: Flexible(
+                      flex: 1,
+                      child: Align(
+                          alignment: Alignment.center,
+                          child: ElevatedButton(onPressed:(){
+                            callShareIntentWifi(jsonResult["ssid"], jsonResult["password"], jsonResult["type"]);
+                          }, child: Text('Share')))),
+                )
               ],
             ),
           ),
@@ -1578,9 +1599,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                         ),
                       ),
                       Visibility(
-                        visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != "")
-                            || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
-                            || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
+                        visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != ""),
+                            // || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
+                            // || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
                         child: Flexible(
                           flex: 1,
                           child: Container(
@@ -1636,7 +1657,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         onTap: () {
-                          callShareIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
+                          print("type"+jsonResult["type"]);
+                          callShareIntent(jsonResult["TEL"] ?? "", jsonResult["EMAIL"] ?? "", jsonResult["FN"] ?? "", jsonResult["type"]);
                         },
                         child: Container(
                             margin: EdgeInsets.only(top: 40),
@@ -1734,14 +1756,43 @@ class _QRViewExampleState extends State<QRViewExample> {
     print("Contacts" + map.toString());
     channelContacts.invokeMethod("ADD_CONTACTS", map);
   }
-  callShareIntent(String phone, String email, String name) {
+
+  callShareIntent(String phone, String email, String name, String type) {
     Map map = {
       "phone": phone,
       "email": email,
       "name": name,
+      "type": type,
     };
     print("Share" + map.toString());
     channelShare.invokeMethod("SHARE", map);
+  }
+
+  callShareIntentWifi(String ssid, String password, String type) {
+    Map map = {
+      "ssid": ssid,
+      "password": password,
+      "type": type,
+    };
+    print("Share" + map.toString());
+    channelShare.invokeMethod("SHARE", map);
+  }
+
+  callShareIntentURL(String url, String type) {
+    Map map = {
+      "url": url,
+      "type": type,
+    };
+    print("Share" + map.toString());
+    channelShare.invokeMethod("SHARE", map);
+  }
+
+  callWifiIntent(String ssid, String password) {
+    Map map = {
+      "ssid": ssid,
+      "password": password,
+    };
+    channelWifi.invokeMethod("connectToWiFi", map);
   }
 
   void _launchURL(String url) async {
