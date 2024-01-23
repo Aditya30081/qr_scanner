@@ -1488,7 +1488,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                         children: [
                           Text("Contact", style: TextStyle(fontSize: 20)),
                           GestureDetector(
-                            child: Icon(Icons.close),
+                            child: historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close),
                             onTap: () {
                               setState(() {
                                 dialogOpen = false;
@@ -1498,7 +1498,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               Navigator.of(context).pop();
                             },
                           ),
-                          historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+
                         ]),
                   ),
                 ),
