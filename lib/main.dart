@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:qr_scanner/test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -56,6 +56,10 @@ class _QRViewExampleState extends State<QRViewExample> {
   bool calendarTimeStamp = false;
   bool barCodeTimeStamp = false;
   bool geoTimeStamp = false;
+  var channel = const MethodChannel("INTENT_EMAIL");
+  var channelPhone = const MethodChannel("INTENT_CALL");
+  var channelContacts = const MethodChannel("INTENT_ADD_CONTACTS");
+  var channelShare = const MethodChannel("INTENT_SHARE");
 
 
   // In order to get hot reload to work we need to pause the camera if the platform
@@ -887,7 +891,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       if (parts.length == 2) {
         String key = parts[0].trim();
         String value = parts[1].trim();
-
+        print("jsonResult" + jsonResult.toString());
         // Handle specific cases, you may need to customize this based on your needs
         if (key == 'N') {
           // Split the name into parts
@@ -998,7 +1002,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       jsonResult = wifiToJSON(url);
     }
     else {
-      jsonResult = {'Blank': ''};
+      jsonResult = {'Blank': url};
     }
     print("TYPE: $type");
 
@@ -1527,9 +1531,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(jsonResult["FN"], style: TextStyle(fontSize: 20)),
-                              Text(jsonResult["TEL"], style: TextStyle(fontSize: 20)),
-                              Text(jsonResult["EMAIL"], style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["FN"] ?? "", style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["TEL"] ?? "", style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["EMAIL"] ?? "", style: TextStyle(fontSize: 20)),
                               // Text(jsonResult[""],
                               //     style: TextStyle(fontSize: 20),
                               //   softWrap: true,
@@ -1551,77 +1555,104 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Flexible(
-                        flex: 1,
-                        child: Container(
-                            width: 80,
-                            padding: EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              color: Colors.blue, // Background color
-                              border: Border.all(
-                                color: Colors.blue, // Border color
-                                width: 2.0, // Border width
+                      Visibility(
+                        visible: jsonResult["TEL"] != null,
+                        child: Flexible(
+                          flex: 1,
+                          child: Container(
+                              width: 80,
+                              padding: EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue, // Background color
+                                border: Border.all(
+                                  color: Colors.blue, // Border color
+                                  width: 2.0, // Border width
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the border radius
                               ),
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Adjust the border radius
-                            ),
-                            child: GestureDetector(onTap: () {
-                              // call method channel
-                            },
-                                child: Icon(Icons.call))),
+                              child: GestureDetector(onTap: () {
+                                  callPhoneIntent(jsonResult["TEL"]);
+                              },
+                                  child: Icon(Icons.call))),
+                        ),
                       ),
-                      Flexible(
-                        flex: 1,
-                        child: Container(
-                            width: 80,
-                            padding: EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              color: Colors.blue, // Background color
-                              border: Border.all(
-                                color: Colors.blue, // Border color
-                                width: 2.0, // Border width
+                      Visibility(
+                        visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != "")
+                            || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
+                            || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
+                        child: Flexible(
+                          flex: 1,
+                          child: Container(
+                              width: 80,
+                              padding: EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue, // Background color
+                                border: Border.all(
+                                  color: Colors.blue, // Border color
+                                  width: 2.0, // Border width
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the border radius
                               ),
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Adjust the border radius
-                            ),
-                            child: Icon(Icons.call)),
+                              child: GestureDetector(onTap: () {
+                                callContactsIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
+                              },
+                                  child: Icon(Icons.add_card_outlined))),
+                        ),
                       ),
-                      Flexible(
-                        flex: 1,
-                        child: Container(
-                            width: 80,
-                            padding: EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              color: Colors.blue, // Background color
-                              border: Border.all(
-                                color: Colors.blue, // Border color
-                                width: 2.0, // Border width
+                      Visibility(
+                        visible: jsonResult["EMAIL"] != null,
+                        child: Flexible(
+                          flex: 1,
+                          child: Container(
+                              width: 80,
+                              padding: EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue, // Background color
+                                border: Border.all(
+                                  color: Colors.blue, // Border color
+                                  width: 2.0, // Border width
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the border radius
                               ),
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Adjust the border radius
-                            ),
-                            child: Icon(Icons.call)),
+                              child: GestureDetector(onTap: () {
+                                        callEmailIntent(jsonResult["EMAIL"]);
+                                      },
+                                  child: Icon(Icons.email))),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Flexible(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                        margin: EdgeInsets.only(top: 40),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.blue, // Border color
-                            width: 2.0, // Border width
-                          ),
-                          borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
-                        ),
-                        width: 300,
-                        height: 50,
-                        child: Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                Visibility(
+                  visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != "")
+                      || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
+                      || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
+                  child: Flexible(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          callShareIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
+                        },
+                        child: Container(
+                            margin: EdgeInsets.only(top: 40),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.blue, // Border color
+                                width: 2.0, // Border width
+                              ),
+                              borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
+                            ),
+                            width: 300,
+                            height: 50,
+                            child: Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                      ),
+                    ),
                   ),
                 )
               ],
@@ -1678,6 +1709,39 @@ class _QRViewExampleState extends State<QRViewExample> {
     );
     await addJsonDataToList(jsonResult);
 
+  }
+
+  callEmailIntent(String email) {
+    Map map = {
+      "email": email,
+    };
+    channel.invokeMethod("EMAIL", map);
+  }
+
+  callPhoneIntent(String phone) {
+    Map map = {
+      "phone": phone,
+    };
+    channelPhone.invokeMethod("CALL", map);
+  }
+
+  callContactsIntent(String phone, String email, String name) {
+    Map map = {
+      "phone": phone,
+      "email": email,
+      "name": name,
+    };
+    print("Contacts" + map.toString());
+    channelContacts.invokeMethod("ADD_CONTACTS", map);
+  }
+  callShareIntent(String phone, String email, String name) {
+    Map map = {
+      "phone": phone,
+      "email": email,
+      "name": name,
+    };
+    print("Share" + map.toString());
+    channelShare.invokeMethod("SHARE", map);
   }
 
   void _launchURL(String url) async {
