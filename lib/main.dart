@@ -60,11 +60,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelPhone = const MethodChannel("INTENT_CALL");
   var channelContacts = const MethodChannel("INTENT_ADD_CONTACTS");
   var channelShare = const MethodChannel("INTENT_SHARE");
-  var channelWifi = const MethodChannel("INTENT_WIFI");
-  var channelText = const MethodChannel("INTENT_TEXT");
-  var channelGeo = const MethodChannel("INTENT_GEO");
-  var channelBarCode = const MethodChannel("INTENT_BAR_CODE");
-  var channelCalender = const MethodChannel("INTENT_CALENDER");
+  var channelAddEvent = const MethodChannel("INTENT_ADD_EVENT");
 
 
   // In order to get hot reload to work we need to pause the camera if the platform
@@ -1001,15 +997,15 @@ class _QRViewExampleState extends State<QRViewExample> {
         String value = keyValue[1].trim();
 
         // Handle specific cases, customize this based on your needs
-        if (key == 'SUMMARY') {
+        if (key.contains('SUMMARY')) {
           jsonResult['summary'] = value;
-        } else if (key == 'LOCATION') {
+        } else if (key.contains('LOCATION')) {
           jsonResult['location'] = value;
-        } else if (key == 'DTSTART') {
+        } else if (key.contains('DTSTART')) {
           jsonResult['startDate'] = value;
-        } else if (key == 'DTEND') {
+        } else if (key.contains('DTEND')) {
           jsonResult['endDate'] = value;
-        } else if (key == 'DESCRIPTION') {
+        } else if (key.contains('DESCRIPTION')) {
           jsonResult['description'] = value;
         } else {
           // Store other fields directly
@@ -1049,7 +1045,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 
 
-  void _showDialog(BuildContext context,String url,String type)  async{
+  void _showDialog(BuildContext context,String url,String type) async {
     print('url'+url);
     Map<String, dynamic> jsonResult;
     if(type == 'VCARD'){
@@ -1540,9 +1536,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(jsonResult['summary'].toString()),
+                              Text(jsonResult['summary'] ?? ""),
                               Text(formatDate(DateTime.parse(jsonResult['startDate']), 'd MMMM y')),
-                              Text(jsonResult['description'].toString()),
+                              Text(jsonResult['description'] ?? ""),
                             ],
                           ),
 
@@ -1550,18 +1546,39 @@ class _QRViewExampleState extends State<QRViewExample> {
                         ],
                       )),
 
-                  const Expanded(
+                  Expanded(
                     flex: 1,
                     child: Row(
                       children: [
-                        ElevatedButton(onPressed:null, child: Text('Calendar')),
-                        ElevatedButton(onPressed:null, child: Text('Copy')),
+                        Visibility(
+                          visible: jsonResult["summary"] != null || jsonResult["startDate"] != null ||
+                              jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
+                          child: ElevatedButton(onPressed:() {
+                            openIntentCalenderAddEvent(jsonResult["summary"] ?? "",jsonResult['startDate'] ?? "",
+                                jsonResult['endDate'] ?? "",jsonResult["location"] ?? ""
+                                ,jsonResult["description"] ?? "",jsonResult["type"]);
+                          }, child: Text('Calendar')),
+                        ),
+                        Visibility(
+                            visible: jsonResult["summary"] != null || jsonResult["startDate"] != null ||
+                                jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
+                            child: ElevatedButton(onPressed:() {
+                              copyToClipboard("Summary: ${jsonResult["summary"] ?? ""}\nStart Date:${jsonResult["startDate"] ?? ""}\n End Date: ${jsonResult["endDate"] ?? ""}\n Location:${jsonResult["location"] ?? ""}\n Description: ${jsonResult["description"] ?? ""}");
+                            }, child: Text('Copy'))),
                       ],
                     ),
                   ),
-                  const Flexible(
-                      flex: 1,
-                      child: ElevatedButton(onPressed:null, child: Text('Share')))
+                  Visibility(
+                    visible: jsonResult["summary"] != null || jsonResult["startDate"] != null ||
+                    jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
+                    child: Flexible(
+                        flex: 1,
+                        child: ElevatedButton(onPressed:() {
+                            callIntentCalender(jsonResult["summary"] ?? "",formatDate(DateTime.parse(jsonResult['startDate'] ?? DateTime.now()), 'd MMMM y'),
+                                formatDate(DateTime.parse(jsonResult['endDate'] ?? DateTime.now()), 'd MMMM y'),jsonResult["location"] ?? ""
+                                ,jsonResult["description"] ?? "",jsonResult["type"]);
+                        }, child: Text('Share'))),
+                  )
                 ],
               ),
             ),
@@ -2628,31 +2645,53 @@ class _QRViewExampleState extends State<QRViewExample> {
     Map map = {
       "barCode": ssid,
     };
-    channelBarCode.invokeMethod("barcode", map);
+    channelShare.invokeMethod("SHARE", map);
   }
 
   callIntentText(String ssid, String password) {
     Map map = {
       "text": ssid,
     };
-    channelText.invokeMethod("text", map);
+    channelShare.invokeMethod("SHARE", map);
   }
 
   callIntentGeo(String ssid, String password) {
     Map map = {
       "location": ssid,
     };
-    channelGeo.invokeMethod("geo", map);
+    channelShare.invokeMethod("SHARE", map);
   }
 
-  callIntentCalender(String ssid, String password) {
+  callIntentCalender(String summary, String sDate, String eDate, String loc, String desc, String type) {
     Map map = {
-      "name": ssid,
-      "sdat": password,
-      "edate": password,
-      "details": password,
+      "summary": summary,
+      "sdate": sDate,
+      "edate": eDate,
+      "location": loc,
+      "description": desc,
+      "type": type,
     };
-    channelCalender.invokeMethod("calender", map);
+    channelShare.invokeMethod("SHARE", map);
+  }
+
+  openIntentCalenderAddEvent(String summary, String sDate, String eDate, String loc, String desc, String type) {
+    Map map = {
+      "summary": summary,
+      "sdate": sDate,
+      "edate": eDate,
+      "location": loc,
+      "description": desc,
+      "type": type,
+    };
+    print("sdate" + sDate.toString());
+    channelAddEvent.invokeMethod("Calendar", map);
+  }
+
+  void copyToClipboard(String copyText) {
+    Clipboard.setData(ClipboardData(text: copyText));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Text copied to clipboard: $copyText'),
+    ));
   }
 
   void _launchURL(String url) async {

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
+import android.provider.CalendarContract
 import android.provider.ContactsContract
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -14,6 +15,8 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 class MainActivity : FlutterActivity() {
@@ -22,6 +25,7 @@ class MainActivity : FlutterActivity() {
     private val intentAddContacts = "INTENT_ADD_CONTACTS"
     private val intentShare = "INTENT_SHARE"
     private val intentWifi = "INTENT_WIFI"
+    private val intentAddEvent = "INTENT_ADD_EVENT"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
@@ -32,6 +36,7 @@ class MainActivity : FlutterActivity() {
             MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentAddContacts)
         val intentShare = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentShare)
         val intentWifi = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentWifi)
+        val intentAddEvent = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentAddEvent)
 
         intentEmail.setMethodCallHandler { call, _ ->
 
@@ -116,33 +121,50 @@ class MainActivity : FlutterActivity() {
                 val type = emailMap["type"] as String
                 val shareIntent = Intent(Intent.ACTION_SEND)
 
-                if (type == "Contact") {
-                    val phone = emailMap["phone"] as String
-                    val email = emailMap["email"] as String
-                    val name = emailMap["name"] as String
+                when (type) {
+                    "Contact" -> {
+                        val phone = emailMap["phone"] as String
+                        val email = emailMap["email"] as String
+                        val name = emailMap["name"] as String
 
-                    shareIntent.type = "text/plain"
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share QR Information") // Optional subject
-                    shareIntent.putExtra(
-                        Intent.EXTRA_TEXT, "Name: $name\n Number: $phone\nEmail: $email"
-                    )
-                } else if (type == "WIFI") {
-                    val ssid = emailMap["ssid"] as String
-                    val password = emailMap["password"] as String
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share QR Information") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "Name: $name\n Number: $phone\nEmail: $email"
+                        )
+                    }
+                    "WIFI" -> {
+                        val ssid = emailMap["ssid"] as String
+                        val password = emailMap["password"] as String
 
-                    shareIntent.type = "text/plain"
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share WIFI Information") // Optional subject
-                    shareIntent.putExtra(
-                        Intent.EXTRA_TEXT, "SSID: $ssid\nPassword:$password"
-                    )
-                } else if (type == "URL") {
-                    val url = emailMap["url"] as String
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share WIFI Information") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "SSID: $ssid\nPassword:$password"
+                        )
+                    }
+                    "URL" -> {
+                        val url = emailMap["url"] as String
 
-                    shareIntent.type = "text/plain"
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share QR Information") // Optional subject
-                    shareIntent.putExtra(
-                        Intent.EXTRA_TEXT, "URL: $url"
-                    )
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share URL") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "URL: $url"
+                        )
+                    }
+                    "Calendar" -> {
+                        val summary = emailMap["summary"] as String
+                        val sdate = emailMap["sdate"] as String
+                        val edate = emailMap["edate"] as String
+                        val loc = emailMap["location"] as String
+                        val desc = emailMap["description"] as String
+                        println(desc)
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share Event Details") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "Summary: $summary\nStart Date:$sdate\n End Date: $edate\n Location:$loc\n Description: $desc"
+                        )
+                    }
                 }
 
                 startActivity(Intent.createChooser(shareIntent, "Share via"))
@@ -156,6 +178,36 @@ class MainActivity : FlutterActivity() {
                 val password: String = wifiMap["password"] as String
                 println("password"+password)
                 connectToWifi(ssid, password)
+            } else {
+                result.notImplemented()
+            }
+        }
+
+        intentAddEvent.setMethodCallHandler { call, result ->
+            if (call.method.equals("Calendar")) {
+                val calendarMap = call.arguments as Map<*, *>
+                val summary = calendarMap["summary"] as String
+                val sdate = calendarMap["sdate"] as String
+                val edate = calendarMap["edate"] as String
+                val loc = calendarMap["location"] as String
+                val desc = calendarMap["description"] as String
+
+                val dateFormatStart = SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.getDefault())
+                val customDateMillisStart = dateFormatStart.parse(sdate)?.time ?: System.currentTimeMillis()
+
+                val dateFormatEnd = SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.getDefault())
+                val customDateMillisEnd = dateFormatEnd.parse(edate)?.time ?: System.currentTimeMillis()
+
+//                val duration: Long = customDateMillisEnd - customDateMillisStart
+//                println("duration" + duration)
+                val calendarIntent = Intent(Intent.ACTION_INSERT)
+                    .setData(CalendarContract.Events.CONTENT_URI)
+                    .putExtra(CalendarContract.Events.TITLE, summary)
+                    .putExtra(CalendarContract.Events.EVENT_LOCATION, loc)
+                    .putExtra(CalendarContract.Events.DESCRIPTION, desc)
+                    .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, customDateMillisStart)
+                    .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, customDateMillisEnd) // 1 hour
+                startActivity(calendarIntent)
             } else {
                 result.notImplemented()
             }
