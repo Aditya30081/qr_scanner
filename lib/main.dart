@@ -225,566 +225,573 @@ class _QRViewExampleState extends State<QRViewExample> {
       //scrollControlDisabledMaxHeightRatio: 800,//MediaQuery.of(context).size.height * 3 / 4,
 
       builder: (BuildContext context) {
-        return NotificationListener<ScrollNotification>(
-          onNotification: (scrollNotification) {
-            double offsetThreshold = -2.0;
-            if (scrollNotification is ScrollEndNotification) {
-              if (scrollNotification.metrics.pixels ==
-                  scrollNotification.metrics.minScrollExtent) {
-                Navigator.of(context).pop(); // Close the bottom sheet
+
+        return Container(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height , // Set a minimum height (adjust as needed)
+          ),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (scrollNotification) {
+              double offsetThreshold = -2.0;
+              if (scrollNotification is ScrollEndNotification) {
+                if (scrollNotification.metrics.pixels ==
+                    scrollNotification.metrics.minScrollExtent) {
+                  Navigator.of(context).pop(); // Close the bottom sheet
+                }
               }
-            }
-            return false;
-          },
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 40,),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor: Colors.transparent, // Background color
-                          // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10), // Border radius
+              return false;
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.transparent, // Background color
+                            // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10), // Border radius
+                            ),
                           ),
-                        ),
-                        onPressed: () async {
-                          await controller?.toggleFlash();
-                          setState(() {});
-                        },
-                        child: FutureBuilder(
-                          future: controller?.getFlashStatus(),
-                          builder: (context, snapshot) {
-                            return const Icon(Icons.flash_on,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
+                          onPressed: () async {
+                            await controller?.toggleFlash();
+                            setState(() {});
                           },
-                        )),
-                    const Padding(
-                      padding: EdgeInsets.only(right: 8.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.expand_more),
-                          Row(
-                            //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Icon(Icons.history),
-                              SizedBox(width: 6,),
-                              Text('Scan History',style: TextStyle(color: Colors.black,fontSize: 24),),
-                            ],
-                          )
-                        ],
+                          child: FutureBuilder(
+                            future: controller?.getFlashStatus(),
+                            builder: (context, snapshot) {
+                              return const Icon(Icons.flash_on,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
+                            },
+                          )),
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8.0),
+                        child: Column(
+                          children: [
+                            Icon(Icons.expand_more),
+                            Row(
+                              //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Icon(Icons.history),
+                                SizedBox(width: 6,),
+                                Text('Scan History',style: TextStyle(color: Colors.black,fontSize: 24),),
+                              ],
+                            )
+                          ],
+                        ),
                       ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Icon(Icons.settings_applications),
-                    ),
-                  ],
-                ),
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: loadJsonDataList(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else {
-                      List<Map<String, dynamic>> loadedList = snapshot.data as List<Map<String, dynamic>> ?? [];
-                      return Column(
-                        children: [
-                          for (Map<String, dynamic> item in loadedList)
-                            GestureDetector(
-                                onTap:(){
-                                  setState(() {
-                                    historyItemTapped = true;
-                                  });
-                                  _showDialog(context, item.toString(), item['type']);
-                                  /*showDialog(
-                                    barrierDismissible: false,
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return item['type'] == 'URL'?
-                                      AlertDialog(
-                                        //backgroundColor: Colors.white,
-                                        content:
-                                        Container(
-                                          color: Colors.white,
-                                          height: MediaQuery.of(context).size.height*3/4,
-                                          width: MediaQuery.of(context).size.width*3/4,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex:1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('Url'),
-                                                    Text(DateTime.now().toString()),
-                                                  ],
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.settings_applications),
+                      ),
+                    ],
+                  ),
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                    future: loadJsonDataList(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else {
+                        List<Map<String, dynamic>> loadedList = snapshot.data as List<Map<String, dynamic>> ?? [];
+                        return Column(
+                          children: [
+                            for (Map<String, dynamic> item in loadedList)
+                              GestureDetector(
+                                  onTap:(){
+                                    setState(() {
+                                      historyItemTapped = true;
+                                    });
+                                    print(item);
+                                    _showHistoryDialog(context, item, item['type']);
+                                    /*showDialog(
+                                      barrierDismissible: false,
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return item['type'] == 'URL'?
+                                        AlertDialog(
+                                          //backgroundColor: Colors.white,
+                                          content:
+                                          Container(
+                                            color: Colors.white,
+                                            height: MediaQuery.of(context).size.height*3/4,
+                                            width: MediaQuery.of(context).size.width*3/4,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex:1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      const Text('Url'),
+                                                      Text(DateTime.now().toString()),
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                              const Expanded(
-                                                  flex: 1,
-                                                  child: Text('Url Name')),
-                                              const Expanded(
-                                                  flex:3,
-                                                  child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                              Expanded(
-                                                flex: 3,
-                                                child: SizedBox(
-                                                  height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                flex: 1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                                  children: [
-                                                    ElevatedButton(onPressed:null, child: Text('Open')),
-                                                    ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Flexible(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                            ],
-                                          ),
-                                        ),
-                                        // actions: [
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       //_launchURL(url);
-                                        //
-                                        //     },
-                                        //     child: const Text('Visit Url'),
-                                        //   ),
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       setState(() {
-                                        //         dialogOpen = false;
-                                        //       });
-                                        //       Navigator.of(context).pop();// Close the dialog
-                                        //     },
-                                        //     child: const Text('Close'),
-                                        //   ),
-                                        // ],
-                                      ):
-                                      item['type'] == 'WIFI' ?
-                                      AlertDialog(
-                                        //backgroundColor: Colors.white,
-                                        content:
-                                        Container(
-                                          color: Colors.white,
-                                          height: MediaQuery.of(context).size.height*3/4,
-                                          width: MediaQuery.of(context).size.width*3/4,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex:1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('Wifi'),
-                                                    Text(DateTime.now().toString()),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Expanded(
+                                                const Expanded(
+                                                    flex: 1,
+                                                    child: Text('Url Name')),
+                                                const Expanded(
+                                                    flex:3,
+                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                                                Expanded(
                                                   flex: 3,
+                                                  child: SizedBox(
+                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                  flex: 1,
                                                   child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                                                     children: [
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                                        children: [
-                                                          Text('SSID'),
-                                                          Text('Password'),
-                                                        ],
-                                                      ),
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text('Aditya'),
-                                                          Text('Adityanand'),
-                                                        ],
-                                                      ),
+                                                      ElevatedButton(onPressed:null, child: Text('Open')),
+                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
                                                     ],
-                                                  )),
-                                              Expanded(
-                                                flex: 3,
-                                                child: SizedBox(
-                                                  height: (MediaQuery.of(context).size.height * 3/4)/3,
+                                                  ),
                                                 ),
-                                              ),
-                                              const Expanded(
-                                                flex: 1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                                  children: [
-                                                    ElevatedButton(onPressed:null, child: Text('Connect')),
-                                                    ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Flexible(
-                                                  flex: 1,
-                                                  child: Align(
-                                                      alignment: Alignment.center,
-                                                      child: ElevatedButton(onPressed:null, child: Text('Share'))))
-                                            ],
-                                          ),
-                                        ),
-                                        // actions: [
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       //_launchURL(url);
-                                        //
-                                        //     },
-                                        //     child: const Text('Visit Url'),
-                                        //   ),
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       setState(() {
-                                        //         dialogOpen = false;
-                                        //       });
-                                        //       Navigator.of(context).pop();// Close the dialog
-                                        //     },
-                                        //     child: const Text('Close'),
-                                        //   ),
-                                        // ],
-                                      ) :
-                                      item['type'] == 'Text' ?
-                                      AlertDialog(
-                                        //backgroundColor: Colors.white,
-                                        content:
-                                        Container(
-                                          color: Colors.white,
-                                          height: MediaQuery.of(context).size.height*3/4,
-                                          width: MediaQuery.of(context).size.width*3/4,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex:1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('Text'),
-                                                    Text(DateTime.now().toString()),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                  flex:3,
-                                                  child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                              Expanded(
-                                                flex: 3,
-                                                child: SizedBox(
-                                                  height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                flex: 1,
-                                                child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                                              ),
-                                              const Flexible(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                            ],
-                                          ),
-                                        ),
-                                        // actions: [
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       //_launchURL(url);
-                                        //
-                                        //     },
-                                        //     child: const Text('Visit Url'),
-                                        //   ),
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       setState(() {
-                                        //         dialogOpen = false;
-                                        //       });
-                                        //       Navigator.of(context).pop();// Close the dialog
-                                        //     },
-                                        //     child: const Text('Close'),
-                                        //   ),
-                                        // ],
-                                      ) :
-                                      item['type'] == 'Geo' ?
-                                      AlertDialog(
-                                        //backgroundColor: Colors.white,
-                                        content:
-                                        Container(
-                                          color: Colors.white,
-                                          height: MediaQuery.of(context).size.height*3/4,
-                                          width: MediaQuery.of(context).size.width*3/4,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex:1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('Geo'),
-                                                    Text(DateTime.now().toString()),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                  flex:3,
-                                                  child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                              Expanded(
-                                                flex: 3,
-                                                child: SizedBox(
-                                                  height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                flex: 1,
-                                                child: Row(
-                                                  children: [
-                                                    ElevatedButton(onPressed:null, child: Text('Maps')),
-                                                    ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Flexible(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                            ],
-                                          ),
-                                        ),
-                                        // actions: [
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       //_launchURL(url);
-                                        //
-                                        //     },
-                                        //     child: const Text('Visit Url'),
-                                        //   ),
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       setState(() {
-                                        //         dialogOpen = false;
-                                        //       });
-                                        //       Navigator.of(context).pop();// Close the dialog
-                                        //     },
-                                        //     child: const Text('Close'),
-                                        //   ),
-                                        // ],
-                                      ) :
-                                      item['type'] == 'BarCode' ?
-                                      AlertDialog(
-                                        //backgroundColor: Colors.white,
-                                        content:
-                                        Container(
-                                          color: Colors.white,
-                                          height: MediaQuery.of(context).size.height*3/4,
-                                          width: MediaQuery.of(context).size.width*3/4,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex:1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('Barcode'),
-                                                    Text(DateTime.now().toString()),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                  flex:3,
-                                                  child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                              Expanded(
-                                                flex: 3,
-                                                child: SizedBox(
-                                                  height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                flex: 1,
-                                                child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                                              ),
-                                              const Flexible(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                            ],
-                                          ),
-                                        ),
-                                        // actions: [
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       //_launchURL(url);
-                                        //
-                                        //     },
-                                        //     child: const Text('Visit Url'),
-                                        //   ),
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       setState(() {
-                                        //         dialogOpen = false;
-                                        //       });
-                                        //       Navigator.of(context).pop();// Close the dialog
-                                        //     },
-                                        //     child: const Text('Close'),
-                                        //   ),
-                                        // ],
-                                      ) :
-                                      item['type'] == 'Calendar' ?
-                                      AlertDialog(
-                                        //backgroundColor: Colors.white,
-                                        content:
-                                        Container(
-                                          color: Colors.white,
-                                          height: MediaQuery.of(context).size.height*3/4,
-                                          width: MediaQuery.of(context).size.width*3/4,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex:1,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    const Text('Calendar'),
-                                                    Text(DateTime.now().toString()),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Expanded(
-                                                  flex:5,
-                                                  child: Row(
-                                                    children: [
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                                        children: [
-                                                          Text('Event Name'),
-                                                          Text('Event Date'),
-                                                          Text('Event Derails'),
-                                                        ],
-                                                      ),
-                                                      Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(''),
-                                                          Text(''),
-                                                          Text(''),
-                                                        ],
-                                                      ),
-
-                                                    ],
-                                                  )),
-
-                                              const Expanded(
-                                                flex: 1,
-                                                child: Row(
-                                                  children: [
-                                                    ElevatedButton(onPressed:null, child: Text('Calendar')),
-                                                    ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Flexible(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                            ],
-                                          ),
-                                        ),
-                                        // actions: [
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       //_launchURL(url);
-                                        //
-                                        //     },
-                                        //     child: const Text('Visit Url'),
-                                        //   ),
-                                        //   TextButton(
-                                        //     onPressed: () {
-                                        //       setState(() {
-                                        //         dialogOpen = false;
-                                        //       });
-                                        //       Navigator.of(context).pop();// Close the dialog
-                                        //     },
-                                        //     child: const Text('Close'),
-                                        //   ),
-                                        // ],
-                                      ) :
-                                      AlertDialog(
-                                        title: const Text('Dialog Title'),
-                                        content: Text(item.toString()),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              //_launchURL(url);
-
-                                            },
-                                            child: const Text('Visit Url'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                dialogOpen = false;
-                                              });
-                                              Navigator.of(context).pop();// Close the dialog
-                                            },
-                                            child: const Text('Close'),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );*/
-                                },
-                                child: Container(
-                                    height: 60,
-                                    width: double.infinity,
-                                    decoration:const BoxDecoration(
-                                      color: Colors.white
-                                    ),
-                                    margin: const EdgeInsets.all(10),
-                                    child: Row(
-
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          //mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                          children: [
-                                            const Padding(
-                                              padding: EdgeInsets.all(8.0),
-                                              child: Icon(Icons.qr_code,size: 30,),
+                                                const Flexible(
+                                                    flex: 1,
+                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                                              ],
                                             ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(top:10,left: 5),
-                                              child: Column(
+                                          ),
+                                          // actions: [
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       //_launchURL(url);
+                                          //
+                                          //     },
+                                          //     child: const Text('Visit Url'),
+                                          //   ),
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       setState(() {
+                                          //         dialogOpen = false;
+                                          //       });
+                                          //       Navigator.of(context).pop();// Close the dialog
+                                          //     },
+                                          //     child: const Text('Close'),
+                                          //   ),
+                                          // ],
+                                        ):
+                                        item['type'] == 'WIFI' ?
+                                        AlertDialog(
+                                          //backgroundColor: Colors.white,
+                                          content:
+                                          Container(
+                                            color: Colors.white,
+                                            height: MediaQuery.of(context).size.height*3/4,
+                                            width: MediaQuery.of(context).size.width*3/4,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex:1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      const Text('Wifi'),
+                                                      Text(DateTime.now().toString()),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                    flex: 3,
+                                                    child: Row(
+                                                      children: [
+                                                        Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                                          children: [
+                                                            Text('SSID'),
+                                                            Text('Password'),
+                                                          ],
+                                                        ),
+                                                        Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text('Aditya'),
+                                                            Text('Adityanand'),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    )),
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: SizedBox(
+                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                  flex: 1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                    children: [
+                                                      ElevatedButton(onPressed:null, child: Text('Connect')),
+                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Flexible(
+                                                    flex: 1,
+                                                    child: Align(
+                                                        alignment: Alignment.center,
+                                                        child: ElevatedButton(onPressed:null, child: Text('Share'))))
+                                              ],
+                                            ),
+                                          ),
+                                          // actions: [
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       //_launchURL(url);
+                                          //
+                                          //     },
+                                          //     child: const Text('Visit Url'),
+                                          //   ),
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       setState(() {
+                                          //         dialogOpen = false;
+                                          //       });
+                                          //       Navigator.of(context).pop();// Close the dialog
+                                          //     },
+                                          //     child: const Text('Close'),
+                                          //   ),
+                                          // ],
+                                        ) :
+                                        item['type'] == 'Text' ?
+                                        AlertDialog(
+                                          //backgroundColor: Colors.white,
+                                          content:
+                                          Container(
+                                            color: Colors.white,
+                                            height: MediaQuery.of(context).size.height*3/4,
+                                            width: MediaQuery.of(context).size.width*3/4,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex:1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      const Text('Text'),
+                                                      Text(DateTime.now().toString()),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                    flex:3,
+                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: SizedBox(
+                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                  flex: 1,
+                                                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
+                                                ),
+                                                const Flexible(
+                                                    flex: 1,
+                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                                              ],
+                                            ),
+                                          ),
+                                          // actions: [
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       //_launchURL(url);
+                                          //
+                                          //     },
+                                          //     child: const Text('Visit Url'),
+                                          //   ),
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       setState(() {
+                                          //         dialogOpen = false;
+                                          //       });
+                                          //       Navigator.of(context).pop();// Close the dialog
+                                          //     },
+                                          //     child: const Text('Close'),
+                                          //   ),
+                                          // ],
+                                        ) :
+                                        item['type'] == 'Geo' ?
+                                        AlertDialog(
+                                          //backgroundColor: Colors.white,
+                                          content:
+                                          Container(
+                                            color: Colors.white,
+                                            height: MediaQuery.of(context).size.height*3/4,
+                                            width: MediaQuery.of(context).size.width*3/4,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex:1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      const Text('Geo'),
+                                                      Text(DateTime.now().toString()),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                    flex:3,
+                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: SizedBox(
+                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                  flex: 1,
+                                                  child: Row(
+                                                    children: [
+                                                      ElevatedButton(onPressed:null, child: Text('Maps')),
+                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Flexible(
+                                                    flex: 1,
+                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                                              ],
+                                            ),
+                                          ),
+                                          // actions: [
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       //_launchURL(url);
+                                          //
+                                          //     },
+                                          //     child: const Text('Visit Url'),
+                                          //   ),
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       setState(() {
+                                          //         dialogOpen = false;
+                                          //       });
+                                          //       Navigator.of(context).pop();// Close the dialog
+                                          //     },
+                                          //     child: const Text('Close'),
+                                          //   ),
+                                          // ],
+                                        ) :
+                                        item['type'] == 'BarCode' ?
+                                        AlertDialog(
+                                          //backgroundColor: Colors.white,
+                                          content:
+                                          Container(
+                                            color: Colors.white,
+                                            height: MediaQuery.of(context).size.height*3/4,
+                                            width: MediaQuery.of(context).size.width*3/4,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex:1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      const Text('Barcode'),
+                                                      Text(DateTime.now().toString()),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                    flex:3,
+                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: SizedBox(
+                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                  flex: 1,
+                                                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
+                                                ),
+                                                const Flexible(
+                                                    flex: 1,
+                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                                              ],
+                                            ),
+                                          ),
+                                          // actions: [
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       //_launchURL(url);
+                                          //
+                                          //     },
+                                          //     child: const Text('Visit Url'),
+                                          //   ),
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       setState(() {
+                                          //         dialogOpen = false;
+                                          //       });
+                                          //       Navigator.of(context).pop();// Close the dialog
+                                          //     },
+                                          //     child: const Text('Close'),
+                                          //   ),
+                                          // ],
+                                        ) :
+                                        item['type'] == 'Calendar' ?
+                                        AlertDialog(
+                                          //backgroundColor: Colors.white,
+                                          content:
+                                          Container(
+                                            color: Colors.white,
+                                            height: MediaQuery.of(context).size.height*3/4,
+                                            width: MediaQuery.of(context).size.width*3/4,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex:1,
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      const Text('Calendar'),
+                                                      Text(DateTime.now().toString()),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Expanded(
+                                                    flex:5,
+                                                    child: Row(
+                                                      children: [
+                                                        Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                                          children: [
+                                                            Text('Event Name'),
+                                                            Text('Event Date'),
+                                                            Text('Event Derails'),
+                                                          ],
+                                                        ),
+                                                        Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(''),
+                                                            Text(''),
+                                                            Text(''),
+                                                          ],
+                                                        ),
 
-                                                children: [
-                                                  item['type']=='WIFI'?Text(item['ssid'].toString()):Text(''),
-                                                  Text(item['type'].toString(),overflow:TextOverflow.ellipsis,),
-                                                ],
-                                              ),
+                                                      ],
+                                                    )),
+
+                                                const Expanded(
+                                                  flex: 1,
+                                                  child: Row(
+                                                    children: [
+                                                      ElevatedButton(onPressed:null, child: Text('Calendar')),
+                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const Flexible(
+                                                    flex: 1,
+                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                                              ],
+                                            ),
+                                          ),
+                                          // actions: [
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       //_launchURL(url);
+                                          //
+                                          //     },
+                                          //     child: const Text('Visit Url'),
+                                          //   ),
+                                          //   TextButton(
+                                          //     onPressed: () {
+                                          //       setState(() {
+                                          //         dialogOpen = false;
+                                          //       });
+                                          //       Navigator.of(context).pop();// Close the dialog
+                                          //     },
+                                          //     child: const Text('Close'),
+                                          //   ),
+                                          // ],
+                                        ) :
+                                        AlertDialog(
+                                          title: const Text('Dialog Title'),
+                                          content: Text(item.toString()),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                //_launchURL(url);
+
+                                              },
+                                              child: const Text('Visit Url'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  dialogOpen = false;
+                                                });
+                                                Navigator.of(context).pop();// Close the dialog
+                                              },
+                                              child: const Text('Close'),
                                             ),
                                           ],
-                                        ),
-                                        Text(formatDateTime(DateTime.parse(item['scannedTime'])),)
-                                      ],
-                                    ))),
-                        ],
-                      );
-                    }
-                  },
-                )
+                                        );
+                                      },
+                                    );*/
+                                  },
+                                  child: Container(
+                                      height: 60,
+                                      width: double.infinity,
+                                      decoration:const BoxDecoration(
+                                        color: Colors.white
+                                      ),
+                                      margin: const EdgeInsets.all(10),
+                                      child: Row(
 
-              ],
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            //mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                            children: [
+                                              const Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Icon(Icons.qr_code,size: 30,),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(top:10,left: 5),
+                                                child: Column(
+                                                  children: [
+                                                    item['type']=='WIFI'?Text(item['ssid'].toString()):item['type']=='Calendar' ? Text(item['summary'].toString()) :const Text('hi'),
+                                                    Text(item['type'].toString(),overflow:TextOverflow.ellipsis,),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(formatDateTime(DateTime.parse(item['scannedTime'])),)
+                                        ],
+                                      ))),
+                          ],
+                        );
+                      }
+                    },
+                  )
+
+                ],
+              ),
             ),
           ),
         );
@@ -870,6 +877,9 @@ class _QRViewExampleState extends State<QRViewExample> {
         else if(scanData.code!.startsWith('WIFI')){
           type = 'WIFI';
         }
+        else if(scanData.code!.contains('BEGIN:VEVENT')){
+          type = 'Calendar';
+        }
         _showDialog(context,scanData.code!,type);
 
 
@@ -904,11 +914,11 @@ class _QRViewExampleState extends State<QRViewExample> {
           jsonResult['firstName'] = nameParts[1].trim();
           jsonResult['lastName'] = nameParts[0].trim();
         }
-        else if (key.contains('TEL;')){
+        else if (key.contains('TEL')){
           jsonResult['TEL'] = value;
-        } else if (key.contains('EMAIL;')){
+        } else if (key.contains('EMAIL')){
           jsonResult['EMAIL'] = value;
-        } else if (key.contains('FN;')){
+        } else if (key.contains('FN')){
           jsonResult['FN'] = value;
         }
         else {
@@ -971,11 +981,60 @@ class _QRViewExampleState extends State<QRViewExample> {
     return jsonResult;
   }
 
+  Map<String, dynamic> eventToJson(String vevent) {
+    // Remove the prefix "BEGIN:VEVENT" and "END:VEVENT"
+    vevent = vevent.replaceAll('BEGIN:VEVENT', '').replaceAll('END:VEVENT', '').trim();
+
+    // Split vevent into lines
+    List<String> lines = vevent.split('\n');
+
+    // Initialize an empty JSON object
+    Map<String, dynamic> jsonResult = {};
+
+    // Iterate through each line
+    for (String line in lines) {
+      // Split each line into key and value
+      List<String> keyValue = line.split(':');
+
+      if (keyValue.length == 2) {
+        String key = keyValue[0].trim();
+        String value = keyValue[1].trim();
+
+        // Handle specific cases, customize this based on your needs
+        if (key == 'SUMMARY') {
+          jsonResult['summary'] = value;
+        } else if (key == 'LOCATION') {
+          jsonResult['location'] = value;
+        } else if (key == 'DTSTART') {
+          jsonResult['startDate'] = value;
+        } else if (key == 'DTEND') {
+          jsonResult['endDate'] = value;
+        } else if (key == 'DESCRIPTION') {
+          jsonResult['description'] = value;
+        } else {
+          // Store other fields directly
+          jsonResult[key.toLowerCase()] = value;
+        }
+      }
+    }
+
+    // Add a type field
+    jsonResult['type'] = 'Calendar';
+    if(!calendarTimeStamp){
+      setState(() {
+        calendarTimeStamp = true;
+      });
+      jsonResult['scannedTime'] = DateTime.now().toString();
+    }
+
+    return jsonResult;
+  }
+
   String formatDateTime(DateTime dateTime) {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
-    DateTime tomorrow = today.add(Duration(days: 1));
-    DateTime yesterday = today.subtract(Duration(days: 1));
+    DateTime tomorrow = today.add(const Duration(days: 1));
+    DateTime yesterday = today.subtract(const Duration(days: 1));
 
     if (dateTime.isAtSameMomentAs(today)) {
       return 'Today';
@@ -988,7 +1047,10 @@ class _QRViewExampleState extends State<QRViewExample> {
       return DateFormat('MM/dd/yyyy').format(dateTime);
     }
   }
+
+
   void _showDialog(BuildContext context,String url,String type)  async{
+    print('url'+url);
     Map<String, dynamic> jsonResult;
     if(type == 'VCARD'){
       jsonResult= vCardToJSON(url);
@@ -1008,10 +1070,15 @@ class _QRViewExampleState extends State<QRViewExample> {
     else if( type == 'WIFI'){
       jsonResult = wifiToJSON(url);
     }
+    else if( type == 'Calendar'){
+      jsonResult = eventToJson(url);
+    }
     else {
       jsonResult = {'Blank': url};
     }
     print("TYPE: $type");
+    print('jsonResult'+jsonResult.toString());
+
 
     showDialog(
       barrierDismissible: false,
@@ -1042,7 +1109,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child: historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                       ),
                     ],
                   ),
@@ -1123,7 +1190,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                       ),
                     ],
                   ),
@@ -1418,66 +1485,85 @@ class _QRViewExampleState extends State<QRViewExample> {
         jsonResult['type'] == 'Calendar' ?
         AlertDialog(
           content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Calendar'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(formatDateTime(jsonResult['scannedTime']))),
-                    ],
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Calendar'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                calendarTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child:const Icon(Icons.close)
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Expanded(
-                    flex:5,
+                  Expanded(
+                      flex:5,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('Event Name'),
+                              Text('Event Date'),
+                              Text('Event Details'),
+                            ],
+                          ),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(':'),
+                              Text(':'),
+                              Text(':'),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(jsonResult['summary'].toString()),
+                              Text(formatDate(DateTime.parse(jsonResult['startDate']), 'd MMMM y')),
+                              Text(jsonResult['description'].toString()),
+                            ],
+                          ),
+
+
+                        ],
+                      )),
+
+                  const Expanded(
+                    flex: 1,
                     child: Row(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('Event Name'),
-                            Text('Event Date'),
-                            Text('Event Derails'),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(''),
-                            Text(''),
-                            Text(''),
-                          ],
-                        ),
-
+                        ElevatedButton(onPressed:null, child: Text('Calendar')),
+                        ElevatedButton(onPressed:null, child: Text('Copy')),
                       ],
-                    )),
-
-                const Expanded(
-                  flex: 1,
-                  child: Row(
-                    children: [
-                      ElevatedButton(onPressed:null, child: Text('Calendar')),
-                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                    ],
+                    ),
                   ),
-                ),
-                const Flexible(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-              ],
+                  const Flexible(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:null, child: Text('Share')))
+                ],
+              ),
             ),
           ),
           // actions: [
@@ -1503,7 +1589,7 @@ class _QRViewExampleState extends State<QRViewExample> {
         AlertDialog(
           // title: const Text('Dialog Title'),
           content: Container(
-            margin: EdgeInsets.only(top: 10),
+            margin: const EdgeInsets.only(top: 10),
             width: MediaQuery.of(context).size.width * 3/4,
             height: MediaQuery.of(context).size.height * 3/4,
             child: Column(
@@ -1515,9 +1601,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Contact", style: TextStyle(fontSize: 20)),
+                          const Text("Contact", style: TextStyle(fontSize: 20)),
                           GestureDetector(
-                            child: historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close),
+                            child: const Icon(Icons.close),
                             onTap: () {
                               setState(() {
                                 dialogOpen = false;
@@ -1527,14 +1613,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                               Navigator.of(context).pop();
                             },
                           ),
-
+                          historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                         ]),
                   ),
                 ),
                 Flexible(
                   flex: 4,
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -1560,9 +1646,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(jsonResult["FN"] ?? "", style: TextStyle(fontSize: 20)),
-                              Text(jsonResult["TEL"] ?? "", style: TextStyle(fontSize: 20)),
-                              Text(jsonResult["EMAIL"] ?? "", style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["FN"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(jsonResult["TEL"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(jsonResult["EMAIL"] ?? "", style: const TextStyle(fontSize: 20)),
                               // Text(jsonResult[""],
                               //     style: TextStyle(fontSize: 20),
                               //   softWrap: true,
@@ -1590,7 +1676,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -1603,7 +1689,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                   callPhoneIntent(jsonResult["TEL"]);
                               },
-                                  child: Icon(Icons.call))),
+                                  child: const Icon(Icons.call))),
                         ),
                       ),
                       Visibility(
@@ -1614,7 +1700,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -1627,7 +1713,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                 callContactsIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
                               },
-                                  child: Icon(Icons.add_card_outlined))),
+                                  child: const Icon(Icons.add_card_outlined))),
                         ),
                       ),
                       Visibility(
@@ -1636,7 +1722,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -1649,7 +1735,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                         callEmailIntent(jsonResult["EMAIL"]);
                                       },
-                                  child: Icon(Icons.email))),
+                                  child: const Icon(Icons.email))),
                         ),
                       ),
                     ],
@@ -1669,7 +1755,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           callShareIntent(jsonResult["TEL"] ?? "", jsonResult["EMAIL"] ?? "", jsonResult["FN"] ?? "", jsonResult["type"]);
                         },
                         child: Container(
-                            margin: EdgeInsets.only(top: 40),
+                            margin: const EdgeInsets.only(top: 40),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -1680,7 +1766,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             ),
                             width: 300,
                             height: 50,
-                            child: Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
                       ),
                     ),
                   ),
@@ -1737,7 +1823,743 @@ class _QRViewExampleState extends State<QRViewExample> {
         );
       },*/
     );
-    await addJsonDataToList(jsonResult);
+    print(jsonDataList);
+    print(!jsonDataList.contains(jsonResult));
+    (jsonDataList.contains(jsonResult)) ? print('jsonJson'+jsonResult.toString()) : await addJsonDataToList(jsonResult);
+
+  }
+  String formatDate(DateTime date,String format) {
+    // Use the intl package for formatting dates
+    final formatter = DateFormat(format);
+    return formatter.format(date);
+  }
+
+  void _showHistoryDialog(BuildContext context,Map<String,dynamic> url,String type)  {
+
+
+
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder:(BuildContext context) {
+        return url['type'] == 'URL'?
+        AlertDialog(
+          //backgroundColor: Colors.white,
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Url'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                              urlTimeStamp = false;
+                              historyItemTapped = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
+                      ),
+                    ],
+                  ),
+                ),
+                const Expanded(
+                    flex: 1,
+                    child: Text('Url Name')),
+                Expanded(
+                    flex:3,
+                    child: Text(url['Web Url'])),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ElevatedButton(onPressed:null, child: Text('Open')),
+                      ElevatedButton(onPressed:null, child: Text('Copy')),
+                    ],
+                  ),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+              ],
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        )://done
+        url['type'] == 'WIFI' ?
+        AlertDialog(
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Wifi'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                              wifiTimeStamp = false;
+                              historyItemTapped = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
+                      ),
+                    ],
+                  ),
+                ),
+                const Expanded(
+                    flex: 3,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('SSID'),
+                            Text('Password'),
+                          ],
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8,right: 8),
+                          child: Column(
+                            children: [
+                              Text(':'),
+                              Text(':'),
+                            ],),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Aditya'),
+                            Text('Adityanand'),
+                          ],
+                        ),
+                      ],
+                    )),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ElevatedButton(onPressed:null, child: Text('Connect')),
+                      ElevatedButton(onPressed:null, child: Text('Copy')),
+                    ],
+                  ),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: Align(
+                        alignment: Alignment.center,
+                        child: ElevatedButton(onPressed:null, child: Text('Share'))))
+              ],
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        ) ://done
+        url['type'] == 'Text' ?
+        AlertDialog(
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Text'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(formatDateTime(url['scannedTime']))),
+                    ],
+                  ),
+                ),
+                const Expanded(
+                    flex:3,
+                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+              ],
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        ) :
+        url['type'] == 'Geo' ?
+        AlertDialog(
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Geo'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(formatDateTime(url['scannedTime']))),
+                    ],
+                  ),
+                ),
+                const Expanded(
+                    flex:3,
+                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: Row(
+                    children: [
+                      ElevatedButton(onPressed:null, child: Text('Maps')),
+                      ElevatedButton(onPressed:null, child: Text('Copy')),
+                    ],
+                  ),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+              ],
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        ) :
+        url['type'] == 'BarCode' ?
+        AlertDialog(
+          //backgroundColor: Colors.white,
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Barcode'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(formatDateTime(url['scannedTime']))),
+                    ],
+                  ),
+                ),
+                const Expanded(
+                    flex:3,
+                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+              ],
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        ) :
+        url['type'] == 'Calendar' ?
+        AlertDialog(
+          content:
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Calendar'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                calendarTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child:Text(formatDateTime(DateTime.parse(url['scannedTime'])))
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                      flex:5,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('Event Name'),
+                              Text('Event Date'),
+                              Text('Event Details'),
+                            ],
+                          ),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(':'),
+                              Text(':'),
+                              Text(':'),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(url['summary'].toString()),
+                              Text(formatDate(DateTime.parse(url['startDate']), 'd MMMM y')),
+                              Text(url['description'].toString()),
+                            ],
+                          ),
+
+
+                        ],
+                      )),
+
+
+                  const Expanded(
+                    flex: 1,
+                    child: Row(
+                      children: [
+                        ElevatedButton(onPressed:null, child: Text('Calendar')),
+                        ElevatedButton(onPressed:null, child: Text('Copy')),
+                      ],
+                    ),
+                  ),
+                  const Flexible(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:null, child: Text('Share')))
+                ],
+              ),
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        ) : //done
+        url['type'] == 'Contact' ?
+        AlertDialog(
+          // title: const Text('Dialog Title'),
+          content: Container(
+            margin: const EdgeInsets.only(top: 10),
+            width: MediaQuery.of(context).size.width * 3/4,
+            height: MediaQuery.of(context).size.height * 3/4,
+            child: Column(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 15),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Contact", style: TextStyle(fontSize: 20)),
+                          GestureDetector(
+                            child: const Icon(Icons.close),
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                vCardTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
+                        ]),
+                  ),
+                ),
+                Flexible(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('Name', style: TextStyle(fontSize: 20)),
+                            Text('Number', style: TextStyle(fontSize: 20)),
+                            Text('Email', style: TextStyle(fontSize: 20)),
+                            // Text('Address', style: TextStyle(fontSize: 20)),
+                          ],
+                        ),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(': ', style: TextStyle(fontSize: 20)),
+                            Text(': ', style: TextStyle(fontSize: 20)),
+                            Text(': ', style: TextStyle(fontSize: 20)),
+                            // Text(': ', style: TextStyle(fontSize: 20)),
+                          ],
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(url["FN"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(url["TEL"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(url["EMAIL"] ?? "", style: const TextStyle(fontSize: 20)),
+                              // Text(jsonResult[""],
+                              //     style: TextStyle(fontSize: 20),
+                              //   softWrap: true,
+                              // ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Flexible(flex: 4,
+                    child: SizedBox(
+                      width: 300,
+                      height: 250,
+                    )),
+                Flexible(
+                  flex: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Visibility(
+                        visible: url["TEL"] != null,
+                        child: Flexible(
+                          flex: 1,
+                          child: Container(
+                              width: 80,
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue, // Background color
+                                border: Border.all(
+                                  color: Colors.blue, // Border color
+                                  width: 2.0, // Border width
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the border radius
+                              ),
+                              child: GestureDetector(onTap: () {
+                                  callPhoneIntent(url["TEL"]);
+                              },
+                                  child: const Icon(Icons.call))),
+                        ),
+                      ),
+                      Visibility(
+                        visible: (url["TEL"] != null && url["TEL"] != "")
+                            || (url["EMAIL"] != null && url["EMAIL"] != "")
+                            || (url["FN"] != null && url["FN"] != ""),
+                        child: Flexible(
+                          flex: 1,
+                          child: Container(
+                              width: 80,
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue, // Background color
+                                border: Border.all(
+                                  color: Colors.blue, // Border color
+                                  width: 2.0, // Border width
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the border radius
+                              ),
+                              child: GestureDetector(onTap: () {
+                                callContactsIntent(url["TEL"], url["EMAIL"], url["FN"]);
+                              },
+                                  child: const Icon(Icons.add_card_outlined))),
+                        ),
+                      ),
+                      Visibility(
+                        visible: url["EMAIL"] != null,
+                        child: Flexible(
+                          flex: 1,
+                          child: Container(
+                              width: 80,
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue, // Background color
+                                border: Border.all(
+                                  color: Colors.blue, // Border color
+                                  width: 2.0, // Border width
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the border radius
+                              ),
+                              child: GestureDetector(onTap: () {
+                                        callEmailIntent(url["EMAIL"]);
+                                      },
+                                  child: const Icon(Icons.email))),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Visibility(
+                  visible: (url["TEL"] != null && url["TEL"] != "")
+                      || (url["EMAIL"] != null && url["EMAIL"] != "")
+                      || (url["FN"] != null && url["FN"] != ""),
+                  child: Flexible(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          callShareIntent(url["TEL"], url["EMAIL"], url["FN"]);
+                        },
+                        child: Container(
+                            margin: const EdgeInsets.only(top: 40),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.blue, // Border color
+                                width: 2.0, // Border width
+                              ),
+                              borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
+                            ),
+                            width: 300,
+                            height: 50,
+                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        )://done
+        AlertDialog(
+          title: const Text('Dialog Title'),
+          content: Text(url.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                //_launchURL(url);
+
+              },
+              child: const Text('Visit Url'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  dialogOpen = false;
+                });
+                Navigator.of(context).pop();// Close the dialog
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+      /*(BuildContext context) {
+        return AlertDialog(
+          title: const Text('Dialog Title'),
+          content: Text(jsonResult.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _launchURL(url);
+
+              },
+              child: const Text('Visit Url'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  dialogOpen = false;
+                });
+                Navigator.of(context).pop();// Close the dialog
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },*/
+    );
+
 
   }
 
