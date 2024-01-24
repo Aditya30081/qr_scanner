@@ -239,7 +239,7 @@ class _QRViewExampleState extends State<QRViewExample> {
               return false;
             },
             child: SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
                   const SizedBox(height: 40,),
@@ -771,7 +771,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                                                 padding: const EdgeInsets.only(top:10,left: 5),
                                                 child: Column(
                                                   children: [
-                                                    item['type']=='WIFI'?Text(item['ssid'].toString()):item['type']=='Calendar' ? Text(item['summary'].toString()) :Text('hi'),
+                                                    item['type']=='WIFI'?Text(item['ssid'].toString()):item['type']=='Calendar' ? Text(item['summary'].toString()) :const Text('hi'),
                                                     Text(item['type'].toString(),overflow:TextOverflow.ellipsis,),
                                                   ],
                                                 ),
@@ -874,7 +874,7 @@ class _QRViewExampleState extends State<QRViewExample> {
         else if(scanData.code!.startsWith('WIFI')){
           type = 'WIFI';
         }
-        else if(scanData.code!.startsWith('BEGIN:VEVENT')){
+        else if(scanData.code!.contains('BEGIN:VEVENT')){
           type = 'Calendar';
         }
         _showDialog(context,scanData.code!,type);
@@ -1030,8 +1030,8 @@ class _QRViewExampleState extends State<QRViewExample> {
   String formatDateTime(DateTime dateTime) {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
-    DateTime tomorrow = today.add(Duration(days: 1));
-    DateTime yesterday = today.subtract(Duration(days: 1));
+    DateTime tomorrow = today.add(const Duration(days: 1));
+    DateTime yesterday = today.subtract(const Duration(days: 1));
 
     if (dateTime.isAtSameMomentAs(today)) {
       return 'Today';
@@ -1074,6 +1074,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       jsonResult = {'Blank': url};
     }
     print("TYPE: $type");
+    print('jsonResult'+jsonResult.toString());
 
 
     showDialog(
@@ -1105,7 +1106,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                       ),
                     ],
                   ),
@@ -1181,7 +1182,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                       ),
                     ],
                   ),
@@ -1485,31 +1486,41 @@ class _QRViewExampleState extends State<QRViewExample> {
                               });
                               Navigator.of(context).pop();
                             },
-                            child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+                            child:const Icon(Icons.close)
                         ),
                       ],
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                       flex:5,
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Column(
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text('Event Name'),
                               Text('Event Date'),
-                              Text('Event Derails'),
+                              Text('Event Details'),
+                            ],
+                          ),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(':'),
+                              Text(':'),
+                              Text(':'),
                             ],
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(''),
-                              Text(''),
-                              Text(''),
+                              Text(jsonResult['summary'].toString()),
+                              Text(formatDate(DateTime.parse(jsonResult['startDate']), 'd MMMM y')),
+                              Text(jsonResult['description'].toString()),
                             ],
                           ),
+
 
                         ],
                       )),
@@ -1553,7 +1564,7 @@ class _QRViewExampleState extends State<QRViewExample> {
         AlertDialog(
           // title: const Text('Dialog Title'),
           content: Container(
-            margin: EdgeInsets.only(top: 10),
+            margin: const EdgeInsets.only(top: 10),
             width: MediaQuery.of(context).size.width * 3/4,
             height: MediaQuery.of(context).size.height * 3/4,
             child: Column(
@@ -1565,9 +1576,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Contact", style: TextStyle(fontSize: 20)),
+                          const Text("Contact", style: TextStyle(fontSize: 20)),
                           GestureDetector(
-                            child: Icon(Icons.close),
+                            child: const Icon(Icons.close),
                             onTap: () {
                               setState(() {
                                 dialogOpen = false;
@@ -1577,14 +1588,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                               Navigator.of(context).pop();
                             },
                           ),
-                          historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : Icon(Icons.close)
+                          historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                         ]),
                   ),
                 ),
                 Flexible(
                   flex: 4,
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -1610,9 +1621,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(jsonResult["FN"] ?? "", style: TextStyle(fontSize: 20)),
-                              Text(jsonResult["TEL"] ?? "", style: TextStyle(fontSize: 20)),
-                              Text(jsonResult["EMAIL"] ?? "", style: TextStyle(fontSize: 20)),
+                              Text(jsonResult["FN"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(jsonResult["TEL"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(jsonResult["EMAIL"] ?? "", style: const TextStyle(fontSize: 20)),
                               // Text(jsonResult[""],
                               //     style: TextStyle(fontSize: 20),
                               //   softWrap: true,
@@ -1640,7 +1651,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -1653,7 +1664,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                   callPhoneIntent(jsonResult["TEL"]);
                               },
-                                  child: Icon(Icons.call))),
+                                  child: const Icon(Icons.call))),
                         ),
                       ),
                       Visibility(
@@ -1664,7 +1675,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -1677,7 +1688,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                 callContactsIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
                               },
-                                  child: Icon(Icons.add_card_outlined))),
+                                  child: const Icon(Icons.add_card_outlined))),
                         ),
                       ),
                       Visibility(
@@ -1686,7 +1697,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -1699,7 +1710,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                         callEmailIntent(jsonResult["EMAIL"]);
                                       },
-                                  child: Icon(Icons.email))),
+                                  child: const Icon(Icons.email))),
                         ),
                       ),
                     ],
@@ -1718,7 +1729,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           callShareIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
                         },
                         child: Container(
-                            margin: EdgeInsets.only(top: 40),
+                            margin: const EdgeInsets.only(top: 40),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -1729,7 +1740,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             ),
                             width: 300,
                             height: 50,
-                            child: Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
                       ),
                     ),
                   ),
@@ -1791,6 +1802,12 @@ class _QRViewExampleState extends State<QRViewExample> {
     (jsonDataList.contains(jsonResult)) ? print('jsonJson'+jsonResult.toString()) : await addJsonDataToList(jsonResult);
 
   }
+  String formatDate(DateTime date,String format) {
+    // Use the intl package for formatting dates
+    final formatter = DateFormat(format);
+    return formatter.format(date);
+  }
+
   void _showHistoryDialog(BuildContext context,Map<String,dynamic> url,String type)  {
 
 
@@ -1824,7 +1841,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : Icon(Icons.close)
+                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
                       ),
                     ],
                   ),
@@ -1900,7 +1917,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : Icon(Icons.close)
+                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
                       ),
                     ],
                   ),
@@ -2204,34 +2221,45 @@ class _QRViewExampleState extends State<QRViewExample> {
                               });
                               Navigator.of(context).pop();
                             },
-                            child:historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : Icon(Icons.close)
+                            child:Text(formatDateTime(DateTime.parse(url['scannedTime'])))
                         ),
                       ],
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                       flex:5,
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Column(
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text('Event Name'),
                               Text('Event Date'),
-                              Text('Event Derails'),
+                              Text('Event Details'),
+                            ],
+                          ),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(':'),
+                              Text(':'),
+                              Text(':'),
                             ],
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(''),
-                              Text(''),
-                              Text(''),
+                              Text(url['summary'].toString()),
+                              Text(formatDate(DateTime.parse(url['startDate']), 'd MMMM y')),
+                              Text(url['description'].toString()),
                             ],
                           ),
 
+
                         ],
                       )),
+
 
                   const Expanded(
                     flex: 1,
@@ -2267,12 +2295,12 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
+        ) : //done
         url['type'] == 'Contact' ?
         AlertDialog(
           // title: const Text('Dialog Title'),
           content: Container(
-            margin: EdgeInsets.only(top: 10),
+            margin: const EdgeInsets.only(top: 10),
             width: MediaQuery.of(context).size.width * 3/4,
             height: MediaQuery.of(context).size.height * 3/4,
             child: Column(
@@ -2284,9 +2312,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Contact", style: TextStyle(fontSize: 20)),
+                          const Text("Contact", style: TextStyle(fontSize: 20)),
                           GestureDetector(
-                            child: Icon(Icons.close),
+                            child: const Icon(Icons.close),
                             onTap: () {
                               setState(() {
                                 dialogOpen = false;
@@ -2296,14 +2324,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                               Navigator.of(context).pop();
                             },
                           ),
-                          historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : Icon(Icons.close)
+                          historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
                         ]),
                   ),
                 ),
                 Flexible(
                   flex: 4,
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -2329,9 +2357,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(url["FN"] ?? "", style: TextStyle(fontSize: 20)),
-                              Text(url["TEL"] ?? "", style: TextStyle(fontSize: 20)),
-                              Text(url["EMAIL"] ?? "", style: TextStyle(fontSize: 20)),
+                              Text(url["FN"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(url["TEL"] ?? "", style: const TextStyle(fontSize: 20)),
+                              Text(url["EMAIL"] ?? "", style: const TextStyle(fontSize: 20)),
                               // Text(jsonResult[""],
                               //     style: TextStyle(fontSize: 20),
                               //   softWrap: true,
@@ -2359,7 +2387,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -2372,7 +2400,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                   callPhoneIntent(url["TEL"]);
                               },
-                                  child: Icon(Icons.call))),
+                                  child: const Icon(Icons.call))),
                         ),
                       ),
                       Visibility(
@@ -2383,7 +2411,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -2396,7 +2424,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                 callContactsIntent(url["TEL"], url["EMAIL"], url["FN"]);
                               },
-                                  child: Icon(Icons.add_card_outlined))),
+                                  child: const Icon(Icons.add_card_outlined))),
                         ),
                       ),
                       Visibility(
@@ -2405,7 +2433,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           flex: 1,
                           child: Container(
                               width: 80,
-                              padding: EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
                                 color: Colors.blue, // Background color
                                 border: Border.all(
@@ -2418,7 +2446,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               child: GestureDetector(onTap: () {
                                         callEmailIntent(url["EMAIL"]);
                                       },
-                                  child: Icon(Icons.email))),
+                                  child: const Icon(Icons.email))),
                         ),
                       ),
                     ],
@@ -2437,7 +2465,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           callShareIntent(url["TEL"], url["EMAIL"], url["FN"]);
                         },
                         child: Container(
-                            margin: EdgeInsets.only(top: 40),
+                            margin: const EdgeInsets.only(top: 40),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -2448,7 +2476,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             ),
                             width: 300,
                             height: 50,
-                            child: Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
                       ),
                     ),
                   ),
