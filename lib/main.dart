@@ -232,11 +232,12 @@ class _QRViewExampleState extends State<QRViewExample> {
           ),
           child: NotificationListener<ScrollNotification>(
             onNotification: (scrollNotification) {
-              if (scrollNotification is UserScrollNotification &&
-                  scrollNotification.direction == ScrollDirection.reverse &&
-                  scrollNotification.metrics.pixels <=
-                      scrollNotification.metrics.minScrollExtent) {
-                Navigator.of(context).pop(); // Close the bottom sheet
+              double offsetThreshold = -2.0;
+              if (scrollNotification is ScrollEndNotification) {
+                if (scrollNotification.metrics.pixels ==
+                    scrollNotification.metrics.minScrollExtent) {
+                  Navigator.of(context).pop(); // Close the bottom sheet
+                }
               }
               return false;
             },
