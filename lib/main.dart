@@ -61,6 +61,10 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelContacts = const MethodChannel("INTENT_ADD_CONTACTS");
   var channelShare = const MethodChannel("INTENT_SHARE");
   var channelWifi = const MethodChannel("INTENT_WIFI");
+  var channelText = const MethodChannel("INTENT_TEXT");
+  var channelGeo = const MethodChannel("INTENT_GEO");
+  var channelBarCode = const MethodChannel("INTENT_BAR_CODE");
+  var channelCalender = const MethodChannel("INTENT_CALENDER");
 
 
   // In order to get hot reload to work we need to pause the camera if the platform
@@ -1169,7 +1173,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       children: [
                         ElevatedButton(onPressed: () {
                           print("object" + jsonResult['ssid']);
-                          callWifiIntent(jsonResult['ssid'], jsonResult['password']);
+                          // callWifiIntent(jsonResult['ssid'], jsonResult['password']);
                         }, child: Text('Connect')),
                         ElevatedButton(onPressed:null, child: Text('Copy')),
                       ],
@@ -1371,7 +1375,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                 ),
                 const Expanded(
                     flex:3,
-                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                    child: Text('Text')),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
@@ -1382,9 +1386,13 @@ class _QRViewExampleState extends State<QRViewExample> {
                   flex: 1,
                   child: ElevatedButton(onPressed:null, child: Text('Copy')),
                 ),
-                const Flexible(
+                Flexible(
                     flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                    child: GestureDetector(
+                      onTap: () {
+                        callIntentBarCode(jsonResult[""],jsonResult["type"]);
+                      },
+                        child: ElevatedButton(onPressed:null, child: Text('Share'))))
               ],
             ),
           ),
@@ -1774,7 +1782,6 @@ class _QRViewExampleState extends State<QRViewExample> {
       "password": password,
       "type": type,
     };
-    print("Share" + map.toString());
     channelShare.invokeMethod("SHARE", map);
   }
 
@@ -1787,12 +1794,45 @@ class _QRViewExampleState extends State<QRViewExample> {
     channelShare.invokeMethod("SHARE", map);
   }
 
+/*
   callWifiIntent(String ssid, String password) {
     Map map = {
       "ssid": ssid,
       "password": password,
     };
     channelWifi.invokeMethod("connectToWiFi", map);
+  }
+*/
+
+  callIntentBarCode(String ssid, String password) {
+    Map map = {
+      "barCode": ssid,
+    };
+    channelBarCode.invokeMethod("barcode", map);
+  }
+
+  callIntentText(String ssid, String password) {
+    Map map = {
+      "text": ssid,
+    };
+    channelText.invokeMethod("text", map);
+  }
+
+  callIntentGeo(String ssid, String password) {
+    Map map = {
+      "location": ssid,
+    };
+    channelGeo.invokeMethod("geo", map);
+  }
+
+  callIntentCalender(String ssid, String password) {
+    Map map = {
+      "name": ssid,
+      "sdat": password,
+      "edate": password,
+      "details": password,
+    };
+    channelCalender.invokeMethod("calender", map);
   }
 
   void _launchURL(String url) async {
