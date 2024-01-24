@@ -62,6 +62,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelContacts = const MethodChannel("INTENT_ADD_CONTACTS");
   var channelShare = const MethodChannel("INTENT_SHARE");
   var channelAddEvent = const MethodChannel("INTENT_ADD_EVENT");
+  var channelMap = const MethodChannel("INTENT_MAP");
 
 
   // In order to get hot reload to work we need to pause the camera if the platform
@@ -1204,21 +1205,28 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Text('Url Name')),
                 Expanded(
                     flex:3,
-                    child: Text(jsonResult['Web Url'])),
+                    child: Text(jsonResult['Web Url'] ?? "")),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
                     height: (MediaQuery.of(context).size.height * 3/4)/3,
                   ),
                 ),
-                const Expanded(
-                  flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ElevatedButton(onPressed:null, child: Text('Open')),
-                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                    ],
+                Visibility(
+                  visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
+                  child: Expanded(
+                    flex: 1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        ElevatedButton(onPressed:() {
+                          _launchURL(jsonResult['Web Url']);
+                        }, child: Text('Open')),
+                        ElevatedButton(onPressed:() {
+                          copyToClipboard(jsonResult['Web Url']);
+                        }, child: Text('Copy')),
+                      ],
+                    ),
                   ),
                 ),
                 Visibility(
@@ -1232,24 +1240,6 @@ class _QRViewExampleState extends State<QRViewExample> {
               ],
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
         )://done
         jsonResult['type'] == 'WIFI' ?
         AlertDialog(
@@ -1324,10 +1314,11 @@ class _QRViewExampleState extends State<QRViewExample> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         ElevatedButton(onPressed: () {
-                          print("object" + jsonResult['ssid']);
                           // callWifiIntent(jsonResult['ssid'], jsonResult['password']);
                         }, child: const Text('Connect')),
-                        const ElevatedButton(onPressed:null, child: Text('Copy')),
+                        ElevatedButton(onPressed:() {
+                          copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
+                        }, child: Text('Copy')),
                       ],
                     ),
                   ),
@@ -1346,89 +1337,7 @@ class _QRViewExampleState extends State<QRViewExample> {
               ],
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
         ) ://done
-        /*jsonResult['type'] == 'Text' ?
-        AlertDialog(
-          content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Text'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(formatDateTime(jsonResult['scannedTime']))),
-                    ],
-                  ),
-                ),
-                const Expanded(
-                    flex:3,
-                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                  ),
-                ),
-                const Expanded(
-                  flex: 1,
-                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                ),
-                const Flexible(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-              ],
-            ),
-          ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
-        ) :*/
         jsonResult['type'] == 'Location' ?
         AlertDialog(
           content:
@@ -1467,18 +1376,32 @@ class _QRViewExampleState extends State<QRViewExample> {
                     height: (MediaQuery.of(context).size.height * 3/4)/3,
                   ),
                 ),
-                const Expanded(
-                  flex: 1,
-                  child: Row(
-                    children: [
-                      ElevatedButton(onPressed:null, child: Text('Maps')),
-                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                    ],
+                Visibility(
+                  visible: (jsonResult['latitude'] != null && jsonResult['latitude'] != '')
+                      || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
+                  child: Expanded(
+                    flex: 1,
+                    child: Row(
+                      children: [
+                        ElevatedButton(onPressed:() {
+                          openMap(jsonResult['latitude'].toString(), jsonResult['longitude'].toString());
+                        }, child: Text('Maps')),
+                        ElevatedButton(onPressed:() {
+                          copyToClipboard("Latitude ${jsonResult['latitude']} Longitude ${jsonResult['longitude']}");
+                        }, child: Text('Copy')),
+                      ],
+                    ),
                   ),
                 ),
-                const Flexible(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                Visibility(
+                  visible: (jsonResult['latitude'] != null && jsonResult['latitude'] != '')
+                      || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
+                  child: Flexible(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:() {
+                        callIntentGeo(jsonResult['latitude'].toString(), jsonResult['longitude'].toString(), jsonResult['type']);
+                      }, child: Text('Share'))),
+                )
               ],
             ),
           ),
@@ -1541,17 +1464,23 @@ class _QRViewExampleState extends State<QRViewExample> {
                     height: (MediaQuery.of(context).size.height * 3/4)/3,
                   ),
                 ),
-                const Expanded(
-                  flex: 1,
-                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                ),
-                Flexible(
+                Visibility(
+                  visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
+                  child: Expanded(
                     flex: 1,
-                    child: GestureDetector(
-                      onTap: () {
-                        callIntentBarCode(jsonResult[""],jsonResult["type"]);
-                      },
-                        child: const ElevatedButton(onPressed:null, child: Text('Share'))))
+                    child: ElevatedButton(onPressed:() {
+                      copyToClipboard(jsonResult['BarCodeData']);
+                    }, child: Text('Copy')),
+                  ),
+                ),
+                Visibility(
+                  visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
+                  child: Flexible(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:() {
+                        callIntentBarCode(jsonResult['BarCodeData'], jsonResult['type']);
+                      }, child: Text('Share'))),
+                )
               ],
             ),
           ),
@@ -1864,7 +1793,6 @@ class _QRViewExampleState extends State<QRViewExample> {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         onTap: () {
-                          print("type"+jsonResult["type"]);
                           callShareIntent(jsonResult["TEL"] ?? "", jsonResult["EMAIL"] ?? "", jsonResult["FN"] ?? "", jsonResult["type"]);
                         },
                         child: Container(
@@ -1916,20 +1844,30 @@ class _QRViewExampleState extends State<QRViewExample> {
                 ),
                 Expanded(
                     flex:3,
-                    child: Text(jsonResult['Blank'])),
+                    child: Text(jsonResult['Blank'] ?? "")),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
                     height: (MediaQuery.of(context).size.height * 3/4)/3,
                   ),
                 ),
-                const Expanded(
-                  flex: 1,
-                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                ),
-                const Flexible(
+                Visibility(
+                  visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
+                  child: Expanded(
                     flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                    child: ElevatedButton(onPressed:() {
+                      copyToClipboard(jsonResult['Blank']);
+                    }, child: Text('Copy')),
+                  ),
+                ),
+                Visibility(
+                  visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
+                  child: Flexible(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:() {
+                        callIntentText(jsonResult['Blank'], jsonResult['type']);
+                      }, child: Text('Share'))),
+                )
               ],
             ),
           ),
@@ -1952,75 +1890,9 @@ class _QRViewExampleState extends State<QRViewExample> {
           //   ),
           // ],
         );
-        /*AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Container(
-              margin: const EdgeInsets.only(top: 10),
-              width: MediaQuery.of(context).size.width * 3/4,
-              height: MediaQuery.of(context).size.height * 3/4,
-              child: Column(
-                children: [
-                  Text(jsonResult['Blank']),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        dialogOpen = false;
-                      });
-                      Navigator.of(context).pop();// Close the dialog
-                    },
-                    child: const Text('Close'),
-                  ),
-                ],
-              )),
-          // actions: [
-          //   // TextButton(
-          //   //   onPressed: () {
-          //   //     //_launchURL(url);
-          //   //
-          //   //   },
-          //   //   child: const Text('Visit Url'),
-          //   // ),
-          //   // TextButton(
-          //   //   onPressed: () {
-          //   //     setState(() {
-          //   //       dialogOpen = false;
-          //   //     });
-          //   //     Navigator.of(context).pop();// Close the dialog
-          //   //   },
-          //   //   child: const Text('Close'),
-          //   // ),
-          // ],
-        );*/
       },
-      /*(BuildContext context) {
-        return AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Text(jsonResult.toString()),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _launchURL(url);
-
-              },
-              child: const Text('Visit Url'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  dialogOpen = false;
-                });
-                Navigator.of(context).pop();// Close the dialog
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },*/
     );
-    /*print(jsonDataList);
-    print(!jsonDataList.contains(jsonResult));
-    (jsonDataList.contains(jsonResult)) ? print('jsonJson'+jsonResult.toString()) : */await addJsonDataToList(jsonResult);
-
+    await addJsonDataToList(jsonResult);
   }
 
   String formatDate(DateTime date,String format) {
@@ -2396,11 +2268,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                 ),
                 Flexible(
                     flex: 1,
-                    child: GestureDetector(
-                        onTap: () {
-                          callIntentBarCode(url[""],url["type"]);
-                        },
-                        child: const ElevatedButton(onPressed:null, child: Text('Share'))))
+                    child: const ElevatedButton(onPressed:null, child: Text('Share')))
               ],
             ),
           ),
@@ -2875,23 +2743,27 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 */
 
-  callIntentBarCode(String ssid, String password) {
+  callIntentBarCode(String barcode, String type) {
     Map map = {
-      "barCode": ssid,
+      "barcode": barcode,
+      "type": type,
     };
     channelShare.invokeMethod("SHARE", map);
   }
 
-  callIntentText(String ssid, String password) {
+  callIntentText(String text, String type) {
     Map map = {
-      "text": ssid,
+      "text": text,
+      "type": type,
     };
     channelShare.invokeMethod("SHARE", map);
   }
 
-  callIntentGeo(String ssid, String password) {
+  callIntentGeo(String lat, String long, String type) {
     Map map = {
-      "location": ssid,
+      "lat": lat,
+      "lng": long,
+      "type": type,
     };
     channelShare.invokeMethod("SHARE", map);
   }
@@ -2917,15 +2789,22 @@ class _QRViewExampleState extends State<QRViewExample> {
       "description": desc,
       "type": type,
     };
-    print("sdate" + sDate.toString());
     channelAddEvent.invokeMethod("Calendar", map);
+  }
+
+  openMap(String lat, String long) {
+    Map map = {
+      "lat": lat,
+      "lng": long,
+    };
+    channelMap.invokeMethod("map", map);
   }
 
   void copyToClipboard(String copyText) {
     Clipboard.setData(ClipboardData(text: copyText));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Text copied to clipboard: $copyText'),
-    ));
+    // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    //   content: Text('Text copied to clipboard: $copyText'),
+    // ));
   }
 
   void _launchURL(String url) async {

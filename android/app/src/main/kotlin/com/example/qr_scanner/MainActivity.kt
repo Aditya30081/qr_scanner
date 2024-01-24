@@ -26,6 +26,7 @@ class MainActivity : FlutterActivity() {
     private val intentShare = "INTENT_SHARE"
     private val intentWifi = "INTENT_WIFI"
     private val intentAddEvent = "INTENT_ADD_EVENT"
+    private val intentOpenMap = "INTENT_MAP"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
@@ -37,6 +38,7 @@ class MainActivity : FlutterActivity() {
         val intentShare = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentShare)
         val intentWifi = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentWifi)
         val intentAddEvent = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentAddEvent)
+        val intentOpenMap = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentOpenMap)
 
         intentEmail.setMethodCallHandler { call, _ ->
 
@@ -152,6 +154,34 @@ class MainActivity : FlutterActivity() {
                             Intent.EXTRA_TEXT, "URL: $url"
                         )
                     }
+                    "Undefined" -> {
+                        val text = emailMap["text"] as String
+
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share Information") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "Text: $text"
+                        )
+                    }
+                    "BarCode" -> {
+                        val barcode = emailMap["barcode"] as String
+
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share Barcode") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "Barcode: $barcode"
+                        )
+                    }
+                    "Location" -> {
+                        val lat = emailMap["lat"] as String
+                        val long = emailMap["lng"] as String
+
+                        shareIntent.type = "text/plain"
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Share Location") // Optional subject
+                        shareIntent.putExtra(
+                            Intent.EXTRA_TEXT, "Latitude: $lat Longitude: $long"
+                        )
+                    }
                     "Calendar" -> {
                         val summary = emailMap["summary"] as String
                         val sdate = emailMap["sdate"] as String
@@ -180,6 +210,29 @@ class MainActivity : FlutterActivity() {
                 connectToWifi(ssid, password)
             } else {
                 result.notImplemented()
+            }
+        }
+
+        intentOpenMap.setMethodCallHandler { call, _ ->
+            if (call.method.equals("map")) {
+                val mMap = call.arguments as Map<*, *>
+                val lat: String = mMap["lat"] as String
+                val lng: String = mMap["lng"] as String
+
+                val geoUri = Uri.parse("geo:0,0?q=$lat,$lng")
+
+                val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
+                mapIntent.setPackage("com.google.android.apps.maps")
+
+                // Check if Google Maps is installed
+                if (mapIntent.resolveActivity(packageManager) != null) {
+                    // Start the activity
+                    startActivity(mapIntent)
+                } else {
+                    // If Google Maps is not installed, you can handle it accordingly
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng"))
+                    startActivity(browserIntent)
+                }
             }
         }
 
