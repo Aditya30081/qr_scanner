@@ -1836,8 +1836,6 @@ class _QRViewExampleState extends State<QRViewExample> {
 
   void _showHistoryDialog(BuildContext context,Map<String,dynamic> url,String type)  {
 
-
-
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -2488,7 +2486,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         onTap: () {
-                          callShareIntent(url["TEL"], url["EMAIL"], url["FN"]);
+                          callShareIntent(url["TEL"], url["EMAIL"], url["FN"], url["type"]);
                         },
                         child: Container(
                             margin: const EdgeInsets.only(top: 40),
