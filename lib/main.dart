@@ -158,23 +158,23 @@ class _QRViewExampleState extends State<QRViewExample> {
                           return const Icon(Icons.flash_on,color: Colors.white,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
                         },
                       )),
-                  Column(
-                    children: [
-                      GestureDetector(
-                        onVerticalDragEnd: (details) {
-                          // Check if the swipe is upwards
-                          if (details.primaryVelocity! < 0) {
-                            // Show the bottom sheet
-                            _showBottomSheet(context);
-                          }
-                        },
-                        child: const IconButton(
+                  GestureDetector(
+                    onVerticalDragEnd: (details) {
+                      // Check if the swipe is upwards
+                      if (details.primaryVelocity! < 0) {
+                        // Show the bottom sheet
+                        _showBottomSheet(context);
+                      }
+                    },
+                    child: const Column(
+                      children: [
+                        IconButton(
                           onPressed: null,
                           //(){_showBottomSheet(context);},
                           icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
-                      ),
-                      const Text('Scan History',style: TextStyle(color: Colors.white),)
-                    ],
+                        Text('Scan History',style: TextStyle(color: Colors.white),)
+                      ],
+                    ),
                   ),
                   ElevatedButton(
                       style: ElevatedButton.styleFrom(
