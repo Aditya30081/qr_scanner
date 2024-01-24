@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -78,7 +79,6 @@ class _QRViewExampleState extends State<QRViewExample> {
     controller!.resumeCamera();
   }
 
-
   Future<List<Map<String, dynamic>>> loadJsonDataList() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStringList = prefs.getStringList('scanHistory') ?? [];
@@ -124,7 +124,7 @@ class _QRViewExampleState extends State<QRViewExample> {
             child:
             Container(
               alignment: Alignment.bottomCenter,
-              height: 120,
+              height: 150,
               width: double.infinity,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(topLeft:Radius.circular(33),topRight: Radius.circular(33)),
@@ -133,7 +133,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Color(0xb21c59d5), // Starting color
+                    Color(0xb2ab37ee), // Starting color
                     Colors.transparent, // Ending color
                   ],
                 ),
@@ -175,7 +175,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                         child: const IconButton(
                           onPressed: null,
                           //(){_showBottomSheet(context);},
-                          icon: Icon(Icons.expand_less,color: Colors.white,),),
+                          icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
                       ),
                       const Text('Scan History',style: TextStyle(color: Colors.white),)
                     ],
@@ -232,6 +232,15 @@ class _QRViewExampleState extends State<QRViewExample> {
           ),
           child: NotificationListener<ScrollNotification>(
             onNotification: (scrollNotification) {
+              if (scrollNotification is UserScrollNotification &&
+                  scrollNotification.direction == ScrollDirection.reverse &&
+                  scrollNotification.metrics.pixels <=
+                      scrollNotification.metrics.minScrollExtent) {
+                Navigator.of(context).pop(); // Close the bottom sheet
+              }
+              return false;
+            },
+            /*onNotification: (scrollNotification) {
               double offsetThreshold = -2.0;
               if (scrollNotification is ScrollEndNotification) {
                 if (scrollNotification.metrics.pixels ==
@@ -240,7 +249,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                 }
               }
               return false;
-            },
+            },*/
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
@@ -756,7 +765,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                                       height: 60,
                                       width: double.infinity,
                                       decoration:const BoxDecoration(
-                                        color: Colors.white
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.all(Radius.circular(8))
                                       ),
                                       margin: const EdgeInsets.all(10),
                                       child: Row(
@@ -773,15 +783,23 @@ class _QRViewExampleState extends State<QRViewExample> {
                                               Padding(
                                                 padding: const EdgeInsets.only(top:10,left: 5),
                                                 child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    item['type']=='WIFI'?Text(item['ssid'].toString()):item['type']=='Calendar' ? Text(item['summary'].toString()) :const Text('hi'),
-                                                    Text(item['type'].toString(),overflow:TextOverflow.ellipsis,),
+                                                    item['type']=='WIFI'?Text(item['ssid']?? ''):
+                                                    item['type']=='Calendar' ? Text(item['summary']??'') :
+                                                    item['type']=='Location'? Text('${item['latitude']??''} , ${item['longitude']?? ''}') :
+                                                    item['type']=='BarCode'? Text(item['BarCodeData']):
+                                                    item['type']=='Undefined'? const Text('unknown') :const Text('hi'),
+                                                    Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,),
                                                   ],
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          Text(formatDateTime(DateTime.parse(item['scannedTime'])),)
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(formatDateTime(DateTime.parse(item['scannedTime'])),),
+                                          )
                                         ],
                                       ))),
                           ],
@@ -845,7 +863,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       key: qrKey,
       onQRViewCreated: _onQRViewCreated,
       overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
+          borderColor: Colors.pink,
           borderRadius: 10,
           borderLength: 30,
           borderWidth: 10,
@@ -879,6 +897,15 @@ class _QRViewExampleState extends State<QRViewExample> {
         }
         else if(scanData.code!.contains('BEGIN:VEVENT')){
           type = 'Calendar';
+        }
+        else if(scanData.code!.startsWith('geo:')){
+          type = 'Location';
+        }
+        else if(scanData.format.toString() =='BarcodeFormat.ean13'){
+          type = 'BarCode';
+        }
+        else{
+          type = 'Undefined';
         }
         _showDialog(context,scanData.code!,type);
 
@@ -935,6 +962,49 @@ class _QRViewExampleState extends State<QRViewExample> {
       jsonResult['scannedTime'] = DateTime.now().toString();
     }
     print(jsonResult);
+
+    return jsonResult;
+  }
+
+  Map<String, dynamic> geoUriToJson(String geoUri) {
+    Map<String, dynamic> jsonResult = {};
+
+    if (geoUri.startsWith("geo:")) {
+      // Remove the "geo:" prefix
+      geoUri = geoUri.substring(4);
+
+      // Split the remaining string into latitude, longitude, and query parameters
+      List<String> parts = geoUri.split("?");
+
+      // Extract latitude and longitude
+      List<String> latLng = parts[0].split(",");
+      if (latLng.length == 2) {
+        jsonResult['latitude'] = double.tryParse(latLng[0]);
+        jsonResult['longitude'] = double.tryParse(latLng[1]);
+      }
+
+      // Parse query parameters if available
+      if (parts.length == 2) {
+        Map<String, dynamic> queryParams = {};
+        List<String> queryParts = parts[1].split("&");
+
+        for (String queryPart in queryParts) {
+          List<String> keyValue = queryPart.split("=");
+          if (keyValue.length == 2) {
+            queryParams[keyValue[0]] = keyValue[1];
+          }
+        }
+        jsonResult['type']='Location';
+        if(!geoTimeStamp){
+          setState(() {
+            geoTimeStamp = true;
+          });
+          jsonResult['scannedTime'] = DateTime.now().toString();
+        }
+        jsonResult['queryParams'] = queryParams;
+      }
+    }
+    print('jsonResult1'+jsonResult.toString());
 
     return jsonResult;
   }
@@ -1073,8 +1143,26 @@ class _QRViewExampleState extends State<QRViewExample> {
     else if( type == 'Calendar'){
       jsonResult = eventToJson(url);
     }
+    else if( type == 'Location'){
+      jsonResult = geoUriToJson(url);
+    }
+    else if( type == 'BarCode'){
+      jsonResult = {'BarCodeData': url,'type':'BarCode'};
+      if(!barCodeTimeStamp){
+        setState(() {
+          barCodeTimeStamp = true;
+        });
+        jsonResult['scannedTime'] = DateTime.now().toString();
+      }
+    }
     else {
-      jsonResult = {'Blank': url};
+      jsonResult = {'Blank': url , 'type': 'Undefined'};//,'scannedTime':DateTime.now().toString()};
+      if(!textTimeStamp){
+        setState(() {
+          textTimeStamp = true;
+        });
+        jsonResult['scannedTime'] = DateTime.now().toString();
+      }
     }
     print("TYPE: $type");
     print('jsonResult'+jsonResult.toString());
@@ -1142,7 +1230,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       flex: 1,
                       child: ElevatedButton(onPressed:() {
                         callShareIntentURL(jsonResult['Web Url'], jsonResult["type"]);
-                      }, child: Text('Share'))),
+                      }, child: const Text('Share'))),
                 )
               ],
             ),
@@ -1241,8 +1329,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                         ElevatedButton(onPressed: () {
                           print("object" + jsonResult['ssid']);
                           // callWifiIntent(jsonResult['ssid'], jsonResult['password']);
-                        }, child: Text('Connect')),
-                        ElevatedButton(onPressed:null, child: Text('Copy')),
+                        }, child: const Text('Connect')),
+                        const ElevatedButton(onPressed:null, child: Text('Copy')),
                       ],
                     ),
                   ),
@@ -1256,7 +1344,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           alignment: Alignment.center,
                           child: ElevatedButton(onPressed:(){
                             callShareIntentWifi(jsonResult["ssid"], jsonResult["password"], jsonResult["type"]);
-                          }, child: Text('Share')))),
+                          }, child: const Text('Share')))),
                 )
               ],
             ),
@@ -1280,7 +1368,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //   ),
           // ],
         ) ://done
-        jsonResult['type'] == 'Text' ?
+        /*jsonResult['type'] == 'Text' ?
         AlertDialog(
           content:
           Container(
@@ -1343,8 +1431,8 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
-        jsonResult['type'] == 'Geo' ?
+        ) :*/
+        jsonResult['type'] == 'Location' ?
         AlertDialog(
           content:
           Container(
@@ -1363,16 +1451,19 @@ class _QRViewExampleState extends State<QRViewExample> {
                           onTap: () {
                             setState(() {
                               dialogOpen = false;
+                              geoTimeStamp = false;
+                              historyItemTapped = false;
                             });
                             Navigator.of(context).pop();
                           },
-                          child: Text(formatDateTime(jsonResult['scannedTime']))),
+                          child: const Icon(Icons.close),
+                      )
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                     flex:3,
-                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                    child: Text('Geo : ${jsonResult['latitude'] ?? ''} , ${jsonResult['longitude'] ?? ''}')),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
@@ -1412,7 +1503,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
+        ) ://done
         jsonResult['type'] == 'BarCode' ?
         AlertDialog(
           //backgroundColor: Colors.white,
@@ -1433,16 +1524,20 @@ class _QRViewExampleState extends State<QRViewExample> {
                           onTap: () {
                             setState(() {
                               dialogOpen = false;
+                              barCodeTimeStamp = false;
+                              historyItemTapped = false;
                             });
                             Navigator.of(context).pop();
                           },
-                          child: Text(formatDateTime(jsonResult['scannedTime']))),
+                          child: const Icon(Icons.close),
+                      ),
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                     flex:3,
-                    child: Text('Text')),
+                    child: Text(jsonResult['BarCodeData'])
+                ),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
@@ -1459,7 +1554,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       onTap: () {
                         callIntentBarCode(jsonResult[""],jsonResult["type"]);
                       },
-                        child: ElevatedButton(onPressed:null, child: Text('Share'))))
+                        child: const ElevatedButton(onPressed:null, child: Text('Share'))))
               ],
             ),
           ),
@@ -1481,7 +1576,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
+        ) ://done
         jsonResult['type'] == 'Calendar' ?
         AlertDialog(
           content:
@@ -1540,9 +1635,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(jsonResult['summary'].toString()),
+                              Text(jsonResult['summary'].toString()??''),
                               Text(formatDate(DateTime.parse(jsonResult['startDate']), 'd MMMM y')),
-                              Text(jsonResult['description'].toString()),
+                              Text(jsonResult['description'].toString()??''),
                             ],
                           ),
 
@@ -1584,7 +1679,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
+        ) ://done
         jsonResult['type'] == 'Contact' ?
         AlertDialog(
           // title: const Text('Dialog Title'),
@@ -1776,27 +1871,108 @@ class _QRViewExampleState extends State<QRViewExample> {
           ),
         )://done
         AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Text(jsonResult.toString()),
-          actions: [
-            TextButton(
-              onPressed: () {
-                //_launchURL(url);
-
-              },
-              child: const Text('Visit Url'),
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Text'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: const Icon(Icons.close)
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                    flex:3,
+                    child: Text(jsonResult['Blank'])),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  dialogOpen = false;
-                });
-                Navigator.of(context).pop();// Close the dialog
-              },
-              child: const Text('Close'),
-            ),
-          ],
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
         );
+        /*AlertDialog(
+          title: const Text('Dialog Title'),
+          content: Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: MediaQuery.of(context).size.width * 3/4,
+              height: MediaQuery.of(context).size.height * 3/4,
+              child: Column(
+                children: [
+                  Text(jsonResult['Blank']),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        dialogOpen = false;
+                      });
+                      Navigator.of(context).pop();// Close the dialog
+                    },
+                    child: const Text('Close'),
+                  ),
+                ],
+              )),
+          // actions: [
+          //   // TextButton(
+          //   //   onPressed: () {
+          //   //     //_launchURL(url);
+          //   //
+          //   //   },
+          //   //   child: const Text('Visit Url'),
+          //   // ),
+          //   // TextButton(
+          //   //   onPressed: () {
+          //   //     setState(() {
+          //   //       dialogOpen = false;
+          //   //     });
+          //   //     Navigator.of(context).pop();// Close the dialog
+          //   //   },
+          //   //   child: const Text('Close'),
+          //   // ),
+          // ],
+        );*/
       },
       /*(BuildContext context) {
         return AlertDialog(
@@ -1823,11 +1999,12 @@ class _QRViewExampleState extends State<QRViewExample> {
         );
       },*/
     );
-    print(jsonDataList);
+    /*print(jsonDataList);
     print(!jsonDataList.contains(jsonResult));
-    (jsonDataList.contains(jsonResult)) ? print('jsonJson'+jsonResult.toString()) : await addJsonDataToList(jsonResult);
+    (jsonDataList.contains(jsonResult)) ? print('jsonJson'+jsonResult.toString()) : */await addJsonDataToList(jsonResult);
 
   }
+
   String formatDate(DateTime date,String format) {
     // Use the intl package for formatting dates
     final formatter = DateFormat(format);
@@ -1875,7 +2052,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Text('Url Name')),
                 Expanded(
                     flex:3,
-                    child: Text(url['Web Url'])),
+                    child: Text(url['Web Url'] ?? '')
+                ),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
@@ -1941,24 +2119,24 @@ class _QRViewExampleState extends State<QRViewExample> {
                             });
                             Navigator.of(context).pop();
                           },
-                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
+                          child:Text(formatDateTime(DateTime.parse(url['scannedTime'])))
                       ),
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                     flex: 3,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text('SSID'),
                             Text('Password'),
                           ],
                         ),
-                        Padding(
+                        const Padding(
                           padding: EdgeInsets.only(left: 8,right: 8),
                           child: Column(
                             children: [
@@ -1969,8 +2147,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Aditya'),
-                            Text('Adityanand'),
+                            Text(url['ssid'].toString() ?? ''),
+                            Text(url['password'].toString() ?? ''),
                           ],
                         ),
                       ],
@@ -2018,7 +2196,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //   ),
           // ],
         ) ://done
-        url['type'] == 'Text' ?
+        /*url['type'] == 'Text' ?
         AlertDialog(
           content:
           Container(
@@ -2081,8 +2259,8 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
-        url['type'] == 'Geo' ?
+        ) :*/
+        url['type'] == 'Location' ?
         AlertDialog(
           content:
           Container(
@@ -2098,19 +2276,22 @@ class _QRViewExampleState extends State<QRViewExample> {
                     children: [
                       const Text('Geo'),
                       GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(formatDateTime(url['scannedTime']))),
+                        onTap: () {
+                          setState(() {
+                            dialogOpen = false;
+                            geoTimeStamp = false;
+                            historyItemTapped = false;
+                          });
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(formatDateTime(DateTime.parse(url['scannedTime'])))
+                      )
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                     flex:3,
-                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                    child: Text('Geo : ${url['latitude'] ?? ''} , ${url['longitude'] ?? ''}')),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
@@ -2150,7 +2331,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
+        ) ://done
         url['type'] == 'BarCode' ?
         AlertDialog(
           //backgroundColor: Colors.white,
@@ -2168,19 +2349,23 @@ class _QRViewExampleState extends State<QRViewExample> {
                     children: [
                       const Text('Barcode'),
                       GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(formatDateTime(url['scannedTime']))),
+                        onTap: () {
+                          setState(() {
+                            dialogOpen = false;
+                            barCodeTimeStamp = false;
+                            historyItemTapped = false;
+                          });
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(formatDateTime(DateTime.parse(url['scannedTime'])))
+                      ),
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                     flex:3,
-                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
+                    child: Text(url['BarCodeData'])
+                ),
                 Expanded(
                   flex: 3,
                   child: SizedBox(
@@ -2191,9 +2376,13 @@ class _QRViewExampleState extends State<QRViewExample> {
                   flex: 1,
                   child: ElevatedButton(onPressed:null, child: Text('Copy')),
                 ),
-                const Flexible(
+                Flexible(
                     flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                    child: GestureDetector(
+                        onTap: () {
+                          callIntentBarCode(url[""],url["type"]);
+                        },
+                        child: const ElevatedButton(onPressed:null, child: Text('Share'))))
               ],
             ),
           ),
@@ -2215,7 +2404,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           //     child: const Text('Close'),
           //   ),
           // ],
-        ) :
+        )  ://done
         url['type'] == 'Calendar' ?
         AlertDialog(
           content:
@@ -2274,9 +2463,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(url['summary'].toString()),
-                              Text(formatDate(DateTime.parse(url['startDate']), 'd MMMM y')),
-                              Text(url['description'].toString()),
+                              Text(url['summary'].toString() ?? ''),
+                              Text(formatDate(DateTime.parse(url['startDate']), 'd MMMM y') ?? ''),
+                              Text(url['description'].toString() ?? ''),
                             ],
                           ),
 
@@ -2348,7 +2537,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                               Navigator.of(context).pop();
                             },
                           ),
-                          historyItemTapped? Text(formatDateTime(DateTime.parse(url['scannedTime']))) : const Icon(Icons.close)
+                          Text(formatDateTime(DateTime.parse(url['scannedTime'])))
                         ]),
                   ),
                 ),
@@ -2510,26 +2699,70 @@ class _QRViewExampleState extends State<QRViewExample> {
           ),
         )://done
         AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Text(url.toString()),
-          actions: [
-            TextButton(
-              onPressed: () {
-                //_launchURL(url);
-
-              },
-              child: const Text('Visit Url'),
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width*3/4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex:1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Text'),
+                      GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                              textTimeStamp = false;
+                              historyItemTapped = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(formatDateTime(DateTime.parse(url['scannedTime'])))
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                    flex:3,
+                    child: Text(url['Blank'])),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  ),
+                ),
+                const Expanded(
+                  flex: 1,
+                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
+                ),
+                const Flexible(
+                    flex: 1,
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  dialogOpen = false;
-                });
-                Navigator.of(context).pop();// Close the dialog
-              },
-              child: const Text('Close'),
-            ),
-          ],
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
         );
       },
       /*(BuildContext context) {
