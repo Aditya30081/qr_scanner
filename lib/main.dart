@@ -9,6 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vibration/vibration.dart';
+
+import 'SharedPreferencesHelper.dart';
 
 
 
@@ -64,7 +67,6 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelAddEvent = const MethodChannel("INTENT_ADD_EVENT");
   var channelMap = const MethodChannel("INTENT_MAP");
 
-
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
   @override
@@ -104,11 +106,16 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
     @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loadJsonDataList();
   }
 
+  Future<void> vibrate() async {
+    if (await Vibration.hasVibrator() != null && await Vibration.hasVibrator() == true) {
+      // Check if the device has a vibrator
+      Vibration.vibrate(duration: 100); // Vibrate for 200 milliseconds
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -878,19 +885,23 @@ class _QRViewExampleState extends State<QRViewExample> {
     );
   }
 
-  void _onQRViewCreated(QRViewController controller){
+  void _onQRViewCreated(QRViewController controller) {
     setState(() {
       this.controller = controller;
     });
-    controller.scannedDataStream.listen((scanData) {
+    controller.scannedDataStream.listen((scanData) async {
       setState(() {
         result = scanData;
       });
       //_showDialog(context,scanData.code!);
-      if(!dialogOpen){
+      if(!dialogOpen) {
+        if (await SharedPreferencesHelper().getVibrateData() == true) {
+          vibrate();
+        }
         setState(() {
           dialogOpen = true;
         });
+
         String type = '';
         if(scanData.code!.contains('VCARD')){
           type = 'VCARD';
@@ -1141,6 +1152,9 @@ class _QRViewExampleState extends State<QRViewExample> {
           urlTimeStamp = true;
         });
         jsonResult['scannedTime'] = DateTime.now().toString();
+      }
+      if (await SharedPreferencesHelper().getOpenURLAutoData() == true) {
+        _launchURL(jsonResult['Web Url']);
       }
     }
     else if( type == 'WIFI'){
@@ -1910,12 +1924,14 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 
   void _showSettingsDialog(){
+
     print('show dialog');
     showDialog(
       barrierDismissible: false,
       context: context,
       builder:(BuildContext context) {
-        return AlertDialog(
+        return const SettingsAlert();
+        /*AlertDialog(
           //backgroundColor: Colors.white,
           content:
           Container(
@@ -1931,13 +1947,19 @@ class _QRViewExampleState extends State<QRViewExample> {
                   flex: 6,
                   child: Column(
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Text(
+                          const Text(
                             'Vibrate',
                           ),
                           Spacer(),
-                          Switch(value: true, onChanged:null
+                          Switch(
+                            onChanged: toggleSwitchVibrate,
+                            value: isSwitchedVibrate,
+                            activeColor: Colors.white,
+                            activeTrackColor: Theme.of(context).colorScheme.primary,
+                            inactiveThumbColor: Theme.of(context).colorScheme.onError,
+                            inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
                           )
                         ],
                       ),
@@ -2035,7 +2057,7 @@ class _QRViewExampleState extends State<QRViewExample> {
               ],
             ),
           ),
-        );
+        );*/
 
         /*AlertDialog(
           title: const Text('Dialog Title'),
@@ -3039,3 +3061,198 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 }
 
+class SettingsAlert extends StatefulWidget {
+  const SettingsAlert({super.key});
+
+  @override
+  State<SettingsAlert> createState() => _SettingsAlertState();
+}
+
+class _SettingsAlertState extends State<SettingsAlert> {
+  final SharedPreferencesHelper prefsHelper = SharedPreferencesHelper();
+  bool isSwitchedVibrate = true;
+  bool isSwitchedOpenURL = true;
+
+  getSwitchValues() async {
+    isSwitchedVibrate = await prefsHelper.getVibrateData();
+    isSwitchedOpenURL = await prefsHelper.getOpenURLAutoData();
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    getSwitchValues();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    void toggleSwitchVibrate(bool value) async {
+      if (await prefsHelper.getVibrateData() == false) {
+        setState(() {
+          // NavigationService.isSoundAlarm = true;
+          prefsHelper.saveVibrateData(true);
+          isSwitchedVibrate = true;
+          //VolumeController().maxVolume();
+        });
+      } else {
+        setState(() {
+          isSwitchedVibrate = false;
+          prefsHelper.saveVibrateData(false);
+        });
+      }
+    }
+
+    void toggleSwitchOpenURLAuto(bool value) async {
+      if (await prefsHelper.getOpenURLAutoData() == false) {
+        setState(() {
+          // NavigationService.isSoundAlarm = true;
+          prefsHelper.saveOpenURLAutoData(true);
+          isSwitchedOpenURL = true;
+          //VolumeController().maxVolume();
+        });
+      } else {
+        setState(() {
+          isSwitchedOpenURL = false;
+          prefsHelper.saveOpenURLAutoData(false);
+        });
+      }
+    }
+
+    return AlertDialog(
+      //backgroundColor: Colors.white,
+      content:
+      Container(
+        height: MediaQuery.of(context).size.height*3/4,
+        width: MediaQuery.of(context).size.width,
+        child:  Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(
+                flex: 1,
+                child: Text('Settings',style: TextStyle(fontSize: 30),)),
+            Expanded(
+              flex: 6,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Vibrate',
+                      ),
+                      Spacer(),
+                      Switch(
+                        onChanged: toggleSwitchVibrate,
+                        value: isSwitchedVibrate,
+                        activeColor: Colors.white,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
+                        inactiveThumbColor: Theme.of(context).colorScheme.onError,
+                        inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
+                      )
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Text(
+                        'Open websites\nautomatically',
+                      ),
+                      Spacer(),
+                      Switch(
+                        onChanged: toggleSwitchOpenURLAuto,
+                        value: isSwitchedOpenURL,
+                        activeColor: Colors.white,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
+                        inactiveThumbColor: Theme.of(context).colorScheme.onError,
+                        inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
+                      )
+                    ],
+                  ),
+                  Container(
+                    margin: EdgeInsets.only(top: 12),
+                    width: double.infinity,
+                    child: TextButton(
+                        style: ButtonStyle(
+                          shape: MaterialStateProperty.all<OutlinedBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                            ),
+                          ),
+                          backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                        ),
+                        onPressed: null,
+                        child: const Text('Clear History',style: TextStyle(color: Colors.white),)),
+                  )
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Container(
+                  // margin: EdgeInsets.only(top: 8),
+                  width: double.infinity,
+                  child: TextButton(
+                      style: ButtonStyle(
+                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                          ),
+                        ),
+                        backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                      ),
+                      onPressed: null,
+                      child: const Text('Rate Us',style: TextStyle(color: Colors.white),)),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Container(
+                  // margin: EdgeInsets.only(top: 8),
+                  width: double.infinity,
+                  child: TextButton(
+                      style: ButtonStyle(
+                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                          ),
+                        ),
+                        backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                      ),
+                      onPressed: null,
+                      child: const Text('Explore More Apps',style: TextStyle(color: Colors.white),)),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Container(
+                  // margin: EdgeInsets.only(top: 8),
+                  width: double.infinity,
+                  child: TextButton(
+                      style: ButtonStyle(
+                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                          ),
+                        ),
+                        backgroundColor: MaterialStateProperty.all<Color>(Colors.yellow),
+                      ),
+                      onPressed: null,
+                      child: const Text('Ad',style: TextStyle(color: Colors.white),)),
+                ),
+              ),
+            )
+
+          ],
+        ),
+      ),
+    );
+  }
+}
