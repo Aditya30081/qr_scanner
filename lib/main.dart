@@ -793,6 +793,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                                                     item['type']=='Calendar' ? Text(item['summary']??'') :
                                                     item['type']=='Location'? Text('${item['latitude']??''} , ${item['longitude']?? ''}') :
                                                     item['type']=='BarCode'? Text(item['BarCodeData']):
+                                                    item['type']=='URL'? Text(item['Web Url']):
                                                     item['type']=='Undefined'? const Text('unknown') :const Text('hi'),
                                                     Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,),
                                                   ],
