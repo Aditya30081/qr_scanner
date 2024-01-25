@@ -213,6 +213,8 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 
 
+
+
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
 
@@ -292,9 +294,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                           ],
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Icon(Icons.settings_applications),
+                      GestureDetector(
+                        onTap: (){
+                          _showSettingsDialog();
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.settings_applications),
+                        ),
                       ),
                     ],
                   ),
@@ -787,6 +794,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                                                     item['type']=='Calendar' ? Text(item['summary']??'') :
                                                     item['type']=='Location'? Text('${item['latitude']??''} , ${item['longitude']?? ''}') :
                                                     item['type']=='BarCode'? Text(item['BarCodeData']):
+                                                    item['type']=='URL'? Text(item['Web Url']):
                                                     item['type']=='Undefined'? const Text('unknown') :const Text('hi'),
                                                     Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,),
                                                   ],
@@ -1582,14 +1590,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                             openIntentCalenderAddEvent(jsonResult["summary"] ?? "",jsonResult['startDate'] ?? "",
                                 jsonResult['endDate'] ?? "",jsonResult["location"] ?? ""
                                 ,jsonResult["description"] ?? "",jsonResult["type"]);
-                          }, child: Text('Calendar')),
+                          }, child: const Text('Calendar')),
                         ),
                         Visibility(
                             visible: jsonResult["summary"] != null || jsonResult["startDate"] != null ||
                                 jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
                             child: ElevatedButton(onPressed:() {
                               copyToClipboard("Summary: ${jsonResult["summary"] ?? ""}\nStart Date:${jsonResult["startDate"] ?? ""}\n End Date: ${jsonResult["endDate"] ?? ""}\n Location:${jsonResult["location"] ?? ""}\n Description: ${jsonResult["description"] ?? ""}");
-                            }, child: Text('Copy'))),
+                            }, child: const Text('Copy'))),
                       ],
                     ),
                   ),
@@ -1602,7 +1610,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                             callIntentCalender(jsonResult["summary"] ?? "",formatDate(DateTime.parse(jsonResult['startDate'] ?? DateTime.now()), 'd MMMM y'),
                                 formatDate(DateTime.parse(jsonResult['endDate'] ?? DateTime.now()), 'd MMMM y'),jsonResult["location"] ?? ""
                                 ,jsonResult["description"] ?? "",jsonResult["type"]);
-                        }, child: Text('Share'))),
+                        }, child: const Text('Share'))),
                   )
                 ],
               ),
@@ -1899,6 +1907,201 @@ class _QRViewExampleState extends State<QRViewExample> {
     // Use the intl package for formatting dates
     final formatter = DateFormat(format);
     return formatter.format(date);
+  }
+
+  void _showSettingsDialog(){
+    print('show dialog');
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder:(BuildContext context) {
+        return AlertDialog(
+          //backgroundColor: Colors.white,
+          content:
+          Container(
+            height: MediaQuery.of(context).size.height*3/4,
+            width: MediaQuery.of(context).size.width,
+            child:  Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Expanded(
+                  flex: 1,
+                    child: Text('Settings',style: TextStyle(fontSize: 30),)),
+                Expanded(
+                  flex: 6,
+                  child: Column(
+                    children: [
+                      const Row(
+                        children: [
+                          Text(
+                            'Vibrate',
+                          ),
+                          Spacer(),
+                          Switch(value: true, onChanged:null
+                          )
+                        ],
+                      ),
+                      const Row(
+                        children: [
+                          Text(
+                            'Open websites\nautomatically',
+                          ),
+                          Spacer(),
+                          Switch(value: true, onChanged: null)
+                        ],
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(top: 12),
+                        width: double.infinity,
+                        child: TextButton(
+                            style: ButtonStyle(
+                              shape: MaterialStateProperty.all<OutlinedBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                                ),
+                              ),
+                              backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                            ),
+                            onPressed: null,
+                            child: const Text('Clear History',style: TextStyle(color: Colors.white),)),
+                      )
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Container(
+                      // margin: EdgeInsets.only(top: 8),
+                      width: double.infinity,
+                      child: TextButton(
+                          style: ButtonStyle(
+                            shape: MaterialStateProperty.all<OutlinedBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                              ),
+                            ),
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                          ),
+                          onPressed: null,
+                          child: const Text('Rate Us',style: TextStyle(color: Colors.white),)),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Container(
+                      // margin: EdgeInsets.only(top: 8),
+                      width: double.infinity,
+                      child: TextButton(
+                          style: ButtonStyle(
+                            shape: MaterialStateProperty.all<OutlinedBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                              ),
+                            ),
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                          ),
+                          onPressed: null,
+                          child: const Text('Explore More Apps',style: TextStyle(color: Colors.white),)),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Container(
+                      // margin: EdgeInsets.only(top: 8),
+                      width: double.infinity,
+                      child: TextButton(
+                          style: ButtonStyle(
+                            shape: MaterialStateProperty.all<OutlinedBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                              ),
+                            ),
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.yellow),
+                          ),
+                          onPressed: null,
+                          child: const Text('Ad',style: TextStyle(color: Colors.white),)),
+                    ),
+                  ),
+                )
+
+              ],
+            ),
+          ),
+        );
+
+        /*AlertDialog(
+          title: const Text('Dialog Title'),
+          content: Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: MediaQuery.of(context).size.width * 3/4,
+              height: MediaQuery.of(context).size.height * 3/4,
+              child: Column(
+                children: [
+                  Text(jsonResult['Blank']),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        dialogOpen = false;
+                      });
+                      Navigator.of(context).pop();// Close the dialog
+                    },
+                    child: const Text('Close'),
+                  ),
+                ],
+              )),
+          // actions: [
+          //   // TextButton(
+          //   //   onPressed: () {
+          //   //     //_launchURL(url);
+          //   //
+          //   //   },
+          //   //   child: const Text('Visit Url'),
+          //   // ),
+          //   // TextButton(
+          //   //   onPressed: () {
+          //   //     setState(() {
+          //   //       dialogOpen = false;
+          //   //     });
+          //   //     Navigator.of(context).pop();// Close the dialog
+          //   //   },
+          //   //   child: const Text('Close'),
+          //   // ),
+          // ],
+        );*/
+      },
+      /*(BuildContext context) {
+        return AlertDialog(
+          title: const Text('Dialog Title'),
+          content: Text(jsonResult.toString()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _launchURL(url);
+
+              },
+              child: const Text('Visit Url'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  dialogOpen = false;
+                });
+                Navigator.of(context).pop();// Close the dialog
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },*/
+    );
   }
 
   void _showHistoryDialog(BuildContext context,Map<String,dynamic> url,String type)  {
