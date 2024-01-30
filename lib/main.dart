@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -121,7 +122,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           Align(
             alignment: Alignment.topCenter,
             child: Container(
-              margin:EdgeInsets.only(top: 50),
+              margin:const EdgeInsets.only(top: 50),
               width: double.infinity,
               decoration: const BoxDecoration(
                 color: Colors.transparent,
@@ -174,7 +175,11 @@ class _QRViewExampleState extends State<QRViewExample> {
                       child: FutureBuilder(
                         future: controller?.getFlashStatus(),
                         builder: (context, snapshot) {
-                          return const Icon(Icons.flash_on,color: Colors.white,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
+                          return SvgPicture.asset(
+                            'assets/flash.svg',
+                            semanticsLabel: 'My SVG Image',
+                            color: Colors.white,
+                          );//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
                         },
                       )),
                   GestureDetector(
@@ -236,7 +241,6 @@ class _QRViewExampleState extends State<QRViewExample> {
 
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
-
       isScrollControlled: true,
       context: context,
 
@@ -245,6 +249,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       builder: (BuildContext context) {
 
         return Container(
+          color: Colors.white,
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height , // Set a minimum height (adjust as needed)
           ),
@@ -273,7 +278,7 @@ class _QRViewExampleState extends State<QRViewExample> {
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
-                  const SizedBox(height: 40,),
+                  const SizedBox(height: 60,),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     //crossAxisAlignment: CrossAxisAlignment.center,
@@ -294,22 +299,18 @@ class _QRViewExampleState extends State<QRViewExample> {
                           child: FutureBuilder(
                             future: controller?.getFlashStatus(),
                             builder: (context, snapshot) {
-                              return const Icon(Icons.flash_on,);//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
+                              return SvgPicture.asset(
+                                'assets/flash.svg',
+                                semanticsLabel: 'My SVG Image',
+                              );//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
                             },
                           )),
                       const Padding(
-                        padding: EdgeInsets.only(right: 8.0),
+                        padding: EdgeInsets.only(right: 16.0),
                         child: Column(
                           children: [
                             Icon(Icons.expand_more),
-                            Row(
-                              //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Icon(Icons.history),
-                                SizedBox(width: 6,),
-                                Text('Scan History',style: TextStyle(color: Colors.black,fontSize: 24),),
-                              ],
-                            )
+                            Text('Scanning history',style: TextStyle(color: Colors.black,fontSize: 20),),
                           ],
                         ),
                       ),
@@ -317,9 +318,12 @@ class _QRViewExampleState extends State<QRViewExample> {
                         onTap: (){
                           _showSettingsDialog();
                         },
-                        child: const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Icon(Icons.settings_applications),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: SvgPicture.asset(
+                            'assets/settings.svg',
+                            semanticsLabel: 'My SVG Image',
+                          ),
                         ),
                       ),
                     ],
@@ -786,10 +790,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                                     );*/
                                   },
                                   child: Container(
-                                      height: 60,
+                                      height: 80,
                                       width: double.infinity,
                                       decoration:const BoxDecoration(
-                                        color: Colors.white,
+                                        color: Color(0xffF4F4F4),
                                         borderRadius: BorderRadius.all(Radius.circular(8))
                                       ),
                                       margin: const EdgeInsets.all(10),
@@ -800,12 +804,15 @@ class _QRViewExampleState extends State<QRViewExample> {
                                           Row(
                                             //mainAxisAlignment: MainAxisAlignment.spaceAround,
                                             children: [
-                                              const Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child: Icon(Icons.qr_code,size: 30,),
-                                              ),
+                                              Container(
+                                                  margin: const EdgeInsets.only(left: 8,right: 8),
+                                                  color: Colors.white,
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.all(8.0),
+                                                    child: Icon(Icons.qr_code,size: 30,),
+                                                  )),
                                               Padding(
-                                                padding: const EdgeInsets.only(top:10,left: 5),
+                                                padding: const EdgeInsets.only(top:16,left: 5),
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
@@ -815,7 +822,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                                                     item['type']=='BarCode'? Text(item['BarCodeData']):
                                                     item['type']=='URL'? Text(item['Web Url']):
                                                     item['type']=='Undefined'? const Text('unknown') :const Text('hi'),
-                                                    Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,),
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(top:8.0),
+                                                      child: Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,),
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -1270,7 +1280,11 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Url'),
+                      Expanded(
+                        child: Container(
+                            child: const Center(
+                                child: Text('Url',style: TextStyle(fontSize: 24),))),
+                      ),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1304,12 +1318,39 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        ElevatedButton(onPressed:() {
-                          _launchURL(jsonResult['Web Url']);
-                        }, child: const Text('Open')),
-                        ElevatedButton(onPressed:() {
-                          copyToClipboard(jsonResult['Web Url']);
-                        }, child: const Text('Copy')),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff1976D2),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0, // Set elevation to 0 to remove it
+                                  backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                              _launchURL(jsonResult['Web Url']);
+                            }, child: const Text('Open',style: TextStyle(color: Colors.white))),
+                          ),
+                        ),
+                        const SizedBox(width: 10,),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:  const Color(0xff71717A),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0, // Set elevation to 0 to remove it
+                                  backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                              copyToClipboard(jsonResult['Web Url']);
+                            }, child: const Text('Copy',style: TextStyle(color: Colors.white),)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1318,9 +1359,24 @@ class _QRViewExampleState extends State<QRViewExample> {
                   visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
                   child: Flexible(
                       flex: 1,
-                      child: ElevatedButton(onPressed:() {
-                        callShareIntentURL(jsonResult['Web Url'], jsonResult["type"]);
-                      }, child: const Text('Share'))),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                          border: Border.all(
+                            color: Colors.black, // Set border color
+                            width: 2.0, // Set border width
+                          ),
+                        ),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0, // Set elevation to 0 to remove it
+                            ),
+                            onPressed:() {
+                          callShareIntentURL(jsonResult['Web Url'], jsonResult["type"]);
+                        }, child: const Text('Share',style: TextStyle(color: Colors.black),)),
+                      )),
                 )
               ],
             ),
@@ -1340,7 +1396,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Wifi'),
+                      Expanded(
+                          child: Container(
+                              child: const Center(
+                                  child: Text('Wifi')))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1398,25 +1457,52 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        ElevatedButton(onPressed: () async {
-                          print("object" + jsonResult['ssid']);
-                          // await PluginWifiConnect. ;
-                          /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
-                              password: jsonResult['password'],
-                              joinOnce: true,
-                              security: NetworkSecurity.WPA);
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff1976D2),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0, // Set elevation to 0 to remove it
+                                    backgroundColor: Colors.transparent
+                                ),
+                                onPressed: () async {
+                              print("object" + jsonResult['ssid']);
+                              // await PluginWifiConnect. ;
+                              /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
+                                  password: jsonResult['password'],
+                                  joinOnce: true,
+                                  security: NetworkSecurity.WPA);
 
-*/
-                          // await PluginWifiConnect.connect(ssid);
-                          // bool isConnected =  await WiFiForIoTPlugin.isConnected();
-                          // print("Is connected to Wi-Fi: $isConnected");
-                          connectToWiFi(jsonResult['ssid'],jsonResult['password']);
-                          //(jsonResult['ssid'], jsonResult['password']);
-                          connectWifiChannel(jsonResult['ssid'], jsonResult['password']);
-                        }, child: const Text('Connect')),
-                        ElevatedButton(onPressed:() {
-                          copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
-                        }, child: const Text('Copy')),
+                            */
+                              // await PluginWifiConnect.connect(ssid);
+                              // bool isConnected =  await WiFiForIoTPlugin.isConnected();
+                              // print("Is connected to Wi-Fi: $isConnected");
+                              connectToWiFi(jsonResult['ssid'],jsonResult['password']);
+                              //(jsonResult['ssid'], jsonResult['password']);
+                              connectWifiChannel(jsonResult['ssid'], jsonResult['password']);
+                            }, child: const Text('Connect',style: TextStyle(color: Colors.white))),
+                          ),
+                        ),
+                        const SizedBox(width: 10,),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff71717A),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0, // Set elevation to 0 to remove it
+                                    backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                              copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
+                            }, child: const Text('Copy',style: TextStyle(color: Colors.white))),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1428,9 +1514,24 @@ class _QRViewExampleState extends State<QRViewExample> {
                       flex: 1,
                       child: Align(
                           alignment: Alignment.center,
-                          child: ElevatedButton(onPressed:(){
-                            callShareIntentWifi(jsonResult["ssid"], jsonResult["password"], jsonResult["type"]);
-                          }, child: const Text('Share')))),
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                              border: Border.all(
+                                color: Colors.black, // Set border color
+                                width: 2.0, // Set border width
+                              ),
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0,
+                                ),
+                                onPressed:(){
+                              callShareIntentWifi(jsonResult["ssid"], jsonResult["password"], jsonResult["type"]);
+                            }, child: const Text('Share',style: TextStyle(color: Colors.black),)),
+                          ))),
                 )
               ],
             ),
@@ -1450,7 +1551,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Geo'),
+                      Expanded(
+                          child: Container(
+                              child: const Center(
+                                  child: Text('Geo')))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1481,12 +1585,39 @@ class _QRViewExampleState extends State<QRViewExample> {
                     flex: 1,
                     child: Row(
                       children: [
-                        ElevatedButton(onPressed:() {
-                          openMap(jsonResult['latitude'].toString(), jsonResult['longitude'].toString());
-                        }, child: const Text('Maps')),
-                        ElevatedButton(onPressed:() {
-                          copyToClipboard("Latitude ${jsonResult['latitude']} Longitude ${jsonResult['longitude']}");
-                        }, child: const Text('Copy')),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:  const Color(0xff71717A),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0, // Set elevation to 0 to remove it
+                                    backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                              openMap(jsonResult['latitude'].toString(), jsonResult['longitude'].toString());
+                            }, child: const Text('Maps',style: TextStyle(color: Colors.white))),
+                          ),
+                        ),
+                        const SizedBox(width:10),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:  const Color(0xff71717A),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0, // Set elevation to 0 to remove it
+                                    backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                              copyToClipboard("Latitude ${jsonResult['latitude']} Longitude ${jsonResult['longitude']}");
+                            }, child: const Text('Copy',style: TextStyle(color: Colors.white))),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1496,31 +1627,28 @@ class _QRViewExampleState extends State<QRViewExample> {
                       || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
                   child: Flexible(
                       flex: 1,
-                      child: ElevatedButton(onPressed:() {
-                        callIntentGeo(jsonResult['latitude'].toString(), jsonResult['longitude'].toString(), jsonResult['type']);
-                      }, child: const Text('Share'))),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                          border: Border.all(
+                            color: Colors.black, // Set border color
+                            width: 2.0, // Set border width
+                          ),
+                        ),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation:0,
+                            ),
+                            onPressed:() {
+                          callIntentGeo(jsonResult['latitude'].toString(), jsonResult['longitude'].toString(), jsonResult['type']);
+                        }, child: const Text('Share',style: TextStyle(color: Colors.black),)),
+                      )),
                 )
               ],
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
         ) ://done
         jsonResult['type'] == 'BarCode' ?
         AlertDialog(
@@ -1537,7 +1665,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Barcode'),
+                      Expanded(
+                          child: Container(
+                              child: const Center(
+                                  child: Text('Barcode')))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1566,40 +1697,52 @@ class _QRViewExampleState extends State<QRViewExample> {
                   visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
                   child: Expanded(
                     flex: 1,
-                    child: ElevatedButton(onPressed:() {
-                      copyToClipboard(jsonResult['BarCodeData']);
-                    }, child: const Text('Copy')),
+                    child: Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 8,bottom: 8),
+                        decoration: BoxDecoration(
+                          color:  const Color(0xff71717A),
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                        ),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                elevation: 0, // Set elevation to 0 to remove it
+                                backgroundColor: Colors.transparent
+                            ),
+                            onPressed:() {
+                          copyToClipboard(jsonResult['BarCodeData']);
+                        }, child: const Text('Copy',style: TextStyle(color: Colors.white))),
+                      ),
+                    ),
                   ),
                 ),
                 Visibility(
                   visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
                   child: Flexible(
                       flex: 1,
-                      child: ElevatedButton(onPressed:() {
-                        callIntentBarCode(jsonResult['BarCodeData'], jsonResult['type']);
-                      }, child: const Text('Share'))),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                          border: Border.all(
+                            color: Colors.black, // Set border color
+                            width: 2.0, // Set border width
+                          ),
+                        ),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                            ),
+                            onPressed:() {
+                          callIntentBarCode(jsonResult['BarCodeData'], jsonResult['type']);
+                        }, child: const Text('Share',style: TextStyle(color: Colors.black),)),
+                      )),
                 )
               ],
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
         ) ://done
         jsonResult['type'] == 'Calendar' ?
         AlertDialog(
@@ -1620,7 +1763,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Calendar'),
+                        Expanded(
+                            child: Container(
+                                child: const Center(
+                                    child: Text('Calendar')))),
                         GestureDetector(
                             onTap: () {
                               setState(() {
@@ -1676,18 +1822,45 @@ class _QRViewExampleState extends State<QRViewExample> {
                         Visibility(
                           visible: jsonResult["summary"] != null || jsonResult["startDate"] != null ||
                               jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
-                          child: ElevatedButton(onPressed:() {
-                            openIntentCalenderAddEvent(jsonResult["summary"] ?? "",jsonResult['startDate'] ?? "",
-                                jsonResult['endDate'] ?? "",jsonResult["location"] ?? ""
-                                ,jsonResult["description"] ?? "",jsonResult["type"]);
-                          }, child: const Text('Calendar')),
+                          child: Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color:  const Color(0xff71717A),
+                                borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                              ),
+                              child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0, // Set elevation to 0 to remove it
+                                      backgroundColor: Colors.transparent
+                                  ),
+                                  onPressed:() {
+                                openIntentCalenderAddEvent(jsonResult["summary"] ?? "",jsonResult['startDate'] ?? "",
+                                    jsonResult['endDate'] ?? "",jsonResult["location"] ?? ""
+                                    ,jsonResult["description"] ?? "",jsonResult["type"]);
+                              }, child: const Text('Calendar',style: TextStyle(color: Colors.white))),
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 10,),
                         Visibility(
                             visible: jsonResult["summary"] != null || jsonResult["startDate"] != null ||
                                 jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
-                            child: ElevatedButton(onPressed:() {
-                              copyToClipboard("Summary: ${jsonResult["summary"] ?? ""}\nStart Date:${jsonResult["startDate"] ?? ""}\n End Date: ${jsonResult["endDate"] ?? ""}\n Location:${jsonResult["location"] ?? ""}\n Description: ${jsonResult["description"] ?? ""}");
-                            }, child: const Text('Copy'))),
+                            child: Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color:  const Color(0xff71717A),
+                                  borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                                ),
+                                child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        elevation: 0, // Set elevation to 0 to remove it
+                                        backgroundColor: Colors.transparent
+                                    ),
+                                    onPressed:() {
+                                  copyToClipboard("Summary: ${jsonResult["summary"] ?? ""}\nStart Date:${jsonResult["startDate"] ?? ""}\n End Date: ${jsonResult["endDate"] ?? ""}\n Location:${jsonResult["location"] ?? ""}\n Description: ${jsonResult["description"] ?? ""}");
+                                }, child: const Text('Copy',style: TextStyle(color: Colors.white))),
+                              ),
+                            )),
                       ],
                     ),
                   ),
@@ -1696,34 +1869,31 @@ class _QRViewExampleState extends State<QRViewExample> {
                     jsonResult["endDate"] != null || jsonResult["location"] != null || jsonResult["description"],
                     child: Flexible(
                         flex: 1,
-                        child: ElevatedButton(onPressed:() {
-                            callIntentCalender(jsonResult["summary"] ?? "",formatDate(DateTime.parse(jsonResult['startDate'] ?? DateTime.now()), 'd MMMM y'),
-                                formatDate(DateTime.parse(jsonResult['endDate'] ?? DateTime.now()), 'd MMMM y'),jsonResult["location"] ?? ""
-                                ,jsonResult["description"] ?? "",jsonResult["type"]);
-                        }, child: const Text('Share'))),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            border: Border.all(
+                              color: Colors.black, // Set border color
+                              width: 2.0, // Set border width
+                            ),
+                          ),
+                          child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                elevation: 0,
+                              ),
+                              onPressed:() {
+                              callIntentCalender(jsonResult["summary"] ?? "",formatDate(DateTime.parse(jsonResult['startDate'] ?? DateTime.now()), 'd MMMM y'),
+                                  formatDate(DateTime.parse(jsonResult['endDate'] ?? DateTime.now()), 'd MMMM y'),jsonResult["location"] ?? ""
+                                  ,jsonResult["description"] ?? "",jsonResult["type"]);
+                          }, child: const Text('Share',style: TextStyle(color: Colors.black))),
+                        )),
                   )
                 ],
               ),
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
         ) ://done
         jsonResult['type'] == 'Contact' ?
         AlertDialog(
@@ -1741,7 +1911,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text("Contact", style: TextStyle(fontSize: 20)),
+                          Expanded(
+                              child: Container(
+                                  child: const Center(
+                                      child:Text("Contact", style: TextStyle(fontSize: 20))))),
                           GestureDetector(
                             child: const Icon(Icons.close),
                             onTap: () {
@@ -1896,16 +2069,17 @@ class _QRViewExampleState extends State<QRViewExample> {
                         child: Container(
                             margin: const EdgeInsets.only(top: 40),
                             alignment: Alignment.center,
+                            width: double.infinity,
                             decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
                               border: Border.all(
-                                color: Colors.blue, // Border color
-                                width: 2.0, // Border width
+                                color: Colors.black, // Set border color
+                                width: 2.0, // Set border width
                               ),
-                              borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
                             ),
-                            width: 300,
                             height: 50,
-                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
+                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.white))),
                       ),
                     ),
                   ),
@@ -1927,7 +2101,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Text'),
+                      Expanded(
+                          child: Container(
+                              child: const Center(
+                                  child: Text('Text')))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1953,40 +2130,52 @@ class _QRViewExampleState extends State<QRViewExample> {
                   visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
                   child: Expanded(
                     flex: 1,
-                    child: ElevatedButton(onPressed:() {
-                      copyToClipboard(jsonResult['Blank']);
-                    }, child: const Text('Copy')),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top:8.0, bottom: 8.0),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color:  const Color(0xff71717A),
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                        ),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                elevation: 0, // Set elevation to 0 to remove it
+                                backgroundColor: Colors.transparent
+                            ),
+                            onPressed:() {
+                          copyToClipboard(jsonResult['Blank']);
+                        }, child: const Text('Copy',style: TextStyle(color: Colors.white),)),
+                      ),
+                    ),
                   ),
                 ),
                 Visibility(
                   visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
                   child: Flexible(
                       flex: 1,
-                      child: ElevatedButton(onPressed:() {
-                        callIntentText(jsonResult['Blank'], jsonResult['type']);
-                      }, child: const Text('Share'))),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                          border: Border.all(
+                            color: Colors.black, // Set border color
+                            width: 2.0, // Set border width
+                          ),
+                        ),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                            ),
+                            onPressed:() {
+                          callIntentText(jsonResult['Blank'], jsonResult['type']);
+                        }, child: const Text('Share',style:TextStyle(color: Colors.black))),
+                      )),
                 )
               ],
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
         );
       },
     );
