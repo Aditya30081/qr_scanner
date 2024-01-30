@@ -1399,7 +1399,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       Expanded(
                           child: Container(
                               child: const Center(
-                                  child: Text('Wifi')))),
+                                  child: Text('Wifi',style: TextStyle(fontSize: 24))))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1554,7 +1554,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       Expanded(
                           child: Container(
                               child: const Center(
-                                  child: Text('Geo')))),
+                                  child: Text('Geo',style: TextStyle(fontSize: 24))))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1668,7 +1668,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       Expanded(
                           child: Container(
                               child: const Center(
-                                  child: Text('Barcode')))),
+                                  child: Text('Barcode',style: TextStyle(fontSize: 24))))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -1766,7 +1766,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                         Expanded(
                             child: Container(
                                 child: const Center(
-                                    child: Text('Calendar')))),
+                                    child: Text('Calendar',style: TextStyle(fontSize: 24))))),
                         GestureDetector(
                             onTap: () {
                               setState(() {
@@ -1914,7 +1914,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                           Expanded(
                               child: Container(
                                   child: const Center(
-                                      child:Text("Contact", style: TextStyle(fontSize: 20))))),
+                                      child:Text("Contact",style: TextStyle(fontSize: 24))))),
                           GestureDetector(
                             child: const Icon(Icons.close),
                             onTap: () {
@@ -2104,7 +2104,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       Expanded(
                           child: Container(
                               child: const Center(
-                                  child: Text('Text')))),
+                                  child: Text('Text',style: TextStyle(fontSize: 24))))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -2405,7 +2405,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Url'),
+                      Expanded(
+                          child: Container(
+                              child: const Center(
+                                  child: Text('Url',style: TextStyle(fontSize: 24),)))),
                       GestureDetector(
                           onTap: () {
                             setState(() {
@@ -2433,40 +2436,77 @@ class _QRViewExampleState extends State<QRViewExample> {
                     height: (MediaQuery.of(context).size.height * 3/4)/3,
                   ),
                 ),
-                const Expanded(
-                  flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ElevatedButton(onPressed:null, child: Text('Open')),
-                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                    ],
+                Visibility(
+                  visible: url['Web Url'] != null && url['Web Url'] != "",
+                  child: Expanded(
+                    flex: 1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff1976D2),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0, // Set elevation to 0 to remove it
+                                    backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                                  _launchURL(url['Web Url']);
+                                }, child: const Text('Open',style: TextStyle(color: Colors.white))),
+                          ),
+                        ),
+                        const SizedBox(width: 10,),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:  const Color(0xff71717A),
+                              borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                            ),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0, // Set elevation to 0 to remove it
+                                    backgroundColor: Colors.transparent
+                                ),
+                                onPressed:() {
+                                  copyToClipboard(url['Web Url']);
+                                }, child: const Text('Copy',style: TextStyle(color: Colors.white),)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const Flexible(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:null, child: Text('Share')))
+                Visibility(
+                  visible: url['Web Url'] != null && url['Web Url'] != "",
+                  child: Flexible(
+                      flex: 1,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0), // Set border radius for a rectangular shape
+                          border: Border.all(
+                            color: Colors.black, // Set border color
+                            width: 2.0, // Set border width
+                          ),
+                        ),
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0, // Set elevation to 0 to remove it
+                            ),
+                            onPressed:() {
+                              callShareIntentURL(url['Web Url'], url["type"]);
+                            }, child: const Text('Share',style: TextStyle(color: Colors.black),)),
+                      )),
+                )
               ],
             ),
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       //_launchURL(url);
-          //
-          //     },
-          //     child: const Text('Visit Url'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         dialogOpen = false;
-          //       });
-          //       Navigator.of(context).pop();// Close the dialog
-          //     },
-          //     child: const Text('Close'),
-          //   ),
-          // ],
+
         )://done
         url['type'] == 'WIFI' ?
         AlertDialog(
