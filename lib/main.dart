@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -47,7 +48,7 @@ class QRViewExample extends StatefulWidget {
   State<StatefulWidget> createState() => _QRViewExampleState();
 }
 
-class _QRViewExampleState extends State<QRViewExample> {
+class _QRViewExampleState extends State<QRViewExample> with SingleTickerProviderStateMixin {
   Barcode? result;
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
@@ -69,6 +70,8 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelAddEvent = const MethodChannel("INTENT_ADD_EVENT");
   var channelMap = const MethodChannel("INTENT_MAP");
   var channelUPI = const MethodChannel("INTENT_UPI");
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -110,6 +113,19 @@ class _QRViewExampleState extends State<QRViewExample> {
     @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    _animation = Tween<double>(begin: 0, end: 10).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.bounceOut, // Use any curve you prefer
+      ),
+    );
+
+    _controller.repeat(reverse: true);
     loadJsonDataList();
   }
 
@@ -197,14 +213,33 @@ class _QRViewExampleState extends State<QRViewExample> {
                         _showBottomSheet(context);
                       }
                     },
-                    child: const Column(
+                    child: Column(
                       children: [
-                        IconButton(
-                          onPressed: null,
-                          //(){_showBottomSheet(context);},
-                          icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
-                        Text('Scan History',style: TextStyle(color: Colors.white),),
-                        Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),)
+                        AnimatedBuilder(
+                            animation: _animation,
+                            builder: (context, child){
+                            return Transform.translate(
+                              offset: Offset(0, -_animation.value),
+                              child: IconButton(
+                                onPressed: () {
+                                  _showBottomSheet(context);
+                                },
+                                //(){_showBottomSheet(context);},
+                                icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
+                            );
+                        }
+
+                        ),
+                        GestureDetector(
+                            onTap: () {
+                              _showBottomSheet(context);
+                            },
+                            child: Text('Scan History',style: TextStyle(color: Colors.white),)),
+                        GestureDetector(
+                            onTap: () {
+                              _showBottomSheet(context);
+                            },
+                            child: Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),))
                       ],
                     ),
                   ),
@@ -344,7 +379,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                         return Text('Error: ${snapshot.error}');
                       } else {
                         List<Map<String, dynamic>> loadedList = snapshot.data as List<Map<String, dynamic>> ?? [];
-                        return Column(
+                        return loadedList.isNotEmpty ?
+                          Column(
                           children: [
                             for (Map<String, dynamic> item in loadedList)
                               GestureDetector(
@@ -844,6 +880,12 @@ class _QRViewExampleState extends State<QRViewExample> {
                                           )
                                         ],
                                       ))),
+                          ],
+                        ) : const Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(height: 300,),
+                            Text('No History', style: TextStyle(fontSize: 20, color: Colors.black),),
                           ],
                         );
                       }
@@ -3625,7 +3667,7 @@ class _SettingsAlertState extends State<SettingsAlert> {
                             Text('Vibrate',
                             style: TextStyle(fontSize: 15,
                                 color: Colors.black),),
-                            Text('Vibration feedback for precision',
+                            Text('Vibration for precision',
                               style: TextStyle(fontSize: 14,
                                   color: Color(0xFFB2B0B0)
                               ),
@@ -3651,12 +3693,12 @@ class _SettingsAlertState extends State<SettingsAlert> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Open websites automatically',
+                                'Open websites directly',
                                 style: TextStyle(fontSize: 15,
                                     color: Colors.black
                                 ),
                               ),Text(
-                                'Instant Website Access for links',
+                                'Instant Website',
                                 style: TextStyle(fontSize: 14,
                                     color: Color(0xFFB2B0B0)
                                 ),
@@ -3692,6 +3734,11 @@ class _SettingsAlertState extends State<SettingsAlert> {
                             ),
                             onPressed: () {
                               prefs.clear();
+                              Fluttertoast.showToast(
+                                msg:
+                                "History Cleared.",
+                                toastLength: Toast.LENGTH_LONG,
+                              );
                             },
                             child: const Text('Clear History',style: TextStyle(color: Color(0xFFEF4444)),)),
                       ),
