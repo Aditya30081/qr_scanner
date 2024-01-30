@@ -14,7 +14,7 @@ import 'package:vibration/vibration.dart';
 import 'SharedPreferencesHelper.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 
-
+late SharedPreferences prefs;
 
 void main() => runApp(const MaterialApp(home: QRViewExample()));
 
@@ -51,7 +51,6 @@ class _QRViewExampleState extends State<QRViewExample> {
   QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   bool dialogOpen = false;
-  late SharedPreferences prefs;
   List<Map<String, dynamic>> jsonDataList = [];
   bool historyItemTapped = false;
   bool wifiTimeStamp = false;
@@ -82,14 +81,14 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 
   Future<List<Map<String, dynamic>>> loadJsonDataList() async {
-    final prefs = await SharedPreferences.getInstance();
+    prefs = await SharedPreferences.getInstance();
     final jsonStringList = prefs.getStringList('scanHistory') ?? [];
     jsonDataList = jsonStringList.map((jsonString) => Map<String, dynamic>.from(json.decode(jsonString))).toList();
 
     return jsonDataList;
   }
   Future<void> saveJsonDataList(List<Map<String, dynamic>> dataList) async {
-    final prefs = await SharedPreferences.getInstance();
+    prefs = await SharedPreferences.getInstance();
     final jsonStringList = dataList.map((data) => json.encode(data)).toList();
 
     await prefs.setStringList('scanHistory', jsonStringList);
@@ -1233,9 +1232,6 @@ class _QRViewExampleState extends State<QRViewExample> {
         });
         jsonResult['scannedTime'] = DateTime.now().toString();
       }
-      if (await SharedPreferencesHelper().getOpenURLAutoData() == true) {
-        _launchURL(jsonResult['Web Url']);
-      }
     }
     else if( type == 'WIFI'){
       jsonResult = wifiToJSON(url);
@@ -1281,248 +1277,266 @@ class _QRViewExampleState extends State<QRViewExample> {
         AlertDialog(
           //backgroundColor: Colors.white,
           content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Url'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                              urlTimeStamp = false;
-                              historyItemTapped = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: historyItemTapped ? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
-                      ),
-                    ],
-                  ),
-                ),
-                const Expanded(
-                    flex: 1,
-                    child: Text('Url Name')),
-                Expanded(
-                    flex:3,
-                    child: Text(jsonResult['Web Url'] ?? "")),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                  ),
-                ),
-                Visibility(
-                  visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
-                  child: Expanded(
-                    flex: 1,
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ElevatedButton(onPressed:() {
-                          _launchURL(jsonResult['Web Url']);
-                        }, child: const Text('Open')),
-                        ElevatedButton(onPressed:() {
-                          copyToClipboard(jsonResult['Web Url']);
-                        }, child: const Text('Copy')),
+                        const Text('Url'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                urlTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: historyItemTapped ? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
+                        ),
                       ],
                     ),
                   ),
-                ),
-                Visibility(
-                  visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
-                  child: Flexible(
+                  const Expanded(
                       flex: 1,
-                      child: ElevatedButton(onPressed:() {
-                        callShareIntentURL(jsonResult['Web Url'], jsonResult["type"]);
-                      }, child: const Text('Share'))),
-                )
-              ],
+                      child: Text('Url Name')),
+                  Expanded(
+                      flex:3,
+                      child: Text(jsonResult['Web Url'] ?? "")),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height * 3/4)/3,
+                    ),
+                  ),
+                  Visibility(
+                    visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
+                    child: Expanded(
+                      flex: 1,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          ElevatedButton(onPressed:() {
+                            _launchURL(jsonResult['Web Url']);
+                          }, child: const Text('Open')),
+                          ElevatedButton(onPressed:() {
+                            copyToClipboard(jsonResult['Web Url']);
+                          }, child: const Text('Copy')),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Visibility(
+                    visible: jsonResult['Web Url'] != null && jsonResult['Web Url'] != "",
+                    child: Flexible(
+                        flex: 1,
+                        child: ElevatedButton(onPressed:() {
+                          callShareIntentURL(jsonResult['Web Url'], jsonResult["type"]);
+                        }, child: const Text('Share'))),
+                  )
+                ],
+              ),
             ),
           ),
         )://done
         jsonResult['type'] == 'WIFI' ?
         AlertDialog(
           content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Wifi'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                              wifiTimeStamp = false;
-                              historyItemTapped = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                    flex: 3,
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('SSID'),
-                            Text('Password'),
-                          ],
+                        const Text('Wifi'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                wifiTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child:historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(left: 8,right: 8),
-                          child: Column(
-                            children: [
-                              Text(':'),
-                              Text(':'),
-                            ],),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(jsonResult['ssid'] ?? ''),
-                            Text(jsonResult['password'] ?? ''),
-                          ],
-                        ),
-                      ],
-                    )),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                  ),
-                ),
-                Visibility(
-                  visible: (jsonResult['ssid'] != null && jsonResult['ssid'] != '')
-                      && (jsonResult['password'] != null && jsonResult['password'] != ''),
-                  child: Expanded(
-                    flex: 1,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        ElevatedButton(onPressed: () async {
-                          print("object" + jsonResult['ssid']);
-                          // await PluginWifiConnect. ;
-                          /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
-                              password: jsonResult['password'],
-                              joinOnce: true,
-                              security: NetworkSecurity.WPA);
-
-*/
-                          // await PluginWifiConnect.connect(ssid);
-                          // bool isConnected =  await WiFiForIoTPlugin.isConnected();
-                          // print("Is connected to Wi-Fi: $isConnected");
-                          connectToWiFi(jsonResult['ssid'],jsonResult['password']);
-                          //(jsonResult['ssid'], jsonResult['password']);
-                          connectWifiChannel(jsonResult['ssid'], jsonResult['password']);
-                        }, child: const Text('Connect')),
-                        ElevatedButton(onPressed:() {
-                          copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
-                        }, child: const Text('Copy')),
                       ],
                     ),
                   ),
-                ),
-                Visibility(
-                  visible: (jsonResult['ssid'] != null && jsonResult['ssid'] != '')
-                      && (jsonResult['password'] != null && jsonResult['password'] != ''),
-                  child: Flexible(
+                  Expanded(
+                      flex: 3,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('SSID'),
+                              Text('Password'),
+                            ],
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8,right: 8),
+                            child: Column(
+                              children: [
+                                Text(':'),
+                                Text(':'),
+                              ],),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(jsonResult['ssid'] ?? ''),
+                              Text(jsonResult['password'] ?? ''),
+                            ],
+                          ),
+                        ],
+                      )),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height * 3/4)/3,
+                    ),
+                  ),
+                  Visibility(
+                    visible: (jsonResult['ssid'] != null && jsonResult['ssid'] != '')
+                        && (jsonResult['password'] != null && jsonResult['password'] != ''),
+                    child: Expanded(
                       flex: 1,
-                      child: Align(
-                          alignment: Alignment.center,
-                          child: ElevatedButton(onPressed:(){
-                            callShareIntentWifi(jsonResult["ssid"], jsonResult["password"], jsonResult["type"]);
-                          }, child: const Text('Share')))),
-                )
-              ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          ElevatedButton(onPressed: () async {
+                            print("object" + jsonResult['ssid']);
+                            // await PluginWifiConnect. ;
+                            /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
+                                password: jsonResult['password'],
+                                joinOnce: true,
+                                security: NetworkSecurity.WPA);
+
+            */
+                            // await PluginWifiConnect.connect(ssid);
+                            // bool isConnected =  await WiFiForIoTPlugin.isConnected();
+                            // print("Is connected to Wi-Fi: $isConnected");
+                            connectToWiFi(jsonResult['ssid'],jsonResult['password']);
+                            //(jsonResult['ssid'], jsonResult['password']);
+                            connectWifiChannel(jsonResult['ssid'], jsonResult['password']);
+                          }, child: const Text('Connect')),
+                          ElevatedButton(onPressed:() {
+                            copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
+                          }, child: const Text('Copy')),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Visibility(
+                    visible: (jsonResult['ssid'] != null && jsonResult['ssid'] != '')
+                        && (jsonResult['password'] != null && jsonResult['password'] != ''),
+                    child: Flexible(
+                        flex: 1,
+                        child: Align(
+                            alignment: Alignment.center,
+                            child: ElevatedButton(onPressed:(){
+                              callShareIntentWifi(jsonResult["ssid"], jsonResult["password"], jsonResult["type"]);
+                            }, child: const Text('Share')))),
+                  )
+                ],
+              ),
             ),
           ),
         ) ://done
         jsonResult['type'] == 'Location' ?
         AlertDialog(
           content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Geo'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                              geoTimeStamp = false;
-                              historyItemTapped = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: const Icon(Icons.close),
-                      )
-                    ],
-                  ),
-                ),
-                Expanded(
-                    flex:3,
-                    child: Text('Geo : ${jsonResult['latitude'] ?? ''} , ${jsonResult['longitude'] ?? ''}')),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                  ),
-                ),
-                Visibility(
-                  visible: (jsonResult['latitude'] != null && jsonResult['latitude'] != '')
-                      || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
-                  child: Expanded(
-                    flex: 1,
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        ElevatedButton(onPressed:() {
-                          openMap(jsonResult['latitude'].toString(), jsonResult['longitude'].toString());
-                        }, child: const Text('Maps')),
-                        ElevatedButton(onPressed:() {
-                          copyToClipboard("Latitude ${jsonResult['latitude']} Longitude ${jsonResult['longitude']}");
-                        }, child: const Text('Copy')),
+                        const Text('Geo'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                geoTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: const Icon(Icons.close),
+                        )
                       ],
                     ),
                   ),
-                ),
-                Visibility(
-                  visible: (jsonResult['latitude'] != null && jsonResult['latitude'] != '')
-                      || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
-                  child: Flexible(
+                  Expanded(
+                      flex:3,
+                      child: Text('Geo : ${jsonResult['latitude'] ?? ''} , ${jsonResult['longitude'] ?? ''}')),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height * 3/4)/3,
+                    ),
+                  ),
+                  Visibility(
+                    visible: (jsonResult['latitude'] != null && jsonResult['latitude'] != '')
+                        || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
+                    child: Expanded(
                       flex: 1,
-                      child: ElevatedButton(onPressed:() {
-                        callIntentGeo(jsonResult['latitude'].toString(), jsonResult['longitude'].toString(), jsonResult['type']);
-                      }, child: const Text('Share'))),
-                )
-              ],
+                      child: Row(
+                        children: [
+                          ElevatedButton(onPressed:() {
+                            openMap(jsonResult['latitude'].toString(), jsonResult['longitude'].toString());
+                          }, child: const Text('Maps')),
+                          ElevatedButton(onPressed:() {
+                            copyToClipboard("Latitude ${jsonResult['latitude']} Longitude ${jsonResult['longitude']}");
+                          }, child: const Text('Copy')),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Visibility(
+                    visible: (jsonResult['latitude'] != null && jsonResult['latitude'] != '')
+                        || (jsonResult['longitude'] != null && jsonResult['longitude'] != ''),
+                    child: Flexible(
+                        flex: 1,
+                        child: ElevatedButton(onPressed:() {
+                          callIntentGeo(jsonResult['latitude'].toString(), jsonResult['longitude'].toString(), jsonResult['type']);
+                        }, child: const Text('Share'))),
+                  )
+                ],
+              ),
             ),
           ),
           // actions: [
@@ -1548,60 +1562,66 @@ class _QRViewExampleState extends State<QRViewExample> {
         AlertDialog(
           //backgroundColor: Colors.white,
           content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Barcode'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                              barCodeTimeStamp = false;
-                              historyItemTapped = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: const Icon(Icons.close),
-                      ),
-                    ],
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Barcode'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                                barCodeTimeStamp = false;
+                                historyItemTapped = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                    flex:3,
-                    child: Text(jsonResult['BarCodeData'])
-                ),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  Expanded(
+                      flex:3,
+                      child: Text(jsonResult['BarCodeData'])
                   ),
-                ),
-                Visibility(
-                  visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
-                  child: Expanded(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:() {
-                      copyToClipboard(jsonResult['BarCodeData']);
-                    }, child: const Text('Copy')),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height * 3/4)/3,
+                    ),
                   ),
-                ),
-                Visibility(
-                  visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
-                  child: Flexible(
+                  Visibility(
+                    visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
+                    child: Expanded(
                       flex: 1,
                       child: ElevatedButton(onPressed:() {
-                        callIntentBarCode(jsonResult['BarCodeData'], jsonResult['type']);
-                      }, child: const Text('Share'))),
-                )
-              ],
+                        copyToClipboard(jsonResult['BarCodeData']);
+                      }, child: const Text('Copy')),
+                    ),
+                  ),
+                  Visibility(
+                    visible: jsonResult['BarCodeData'] != null && jsonResult['BarCodeData'] != '',
+                    child: Flexible(
+                        flex: 1,
+                        child: ElevatedButton(onPressed:() {
+                          callIntentBarCode(jsonResult['BarCodeData'], jsonResult['type']);
+                        }, child: const Text('Share'))),
+                  )
+                ],
+              ),
             ),
           ),
           // actions: [
@@ -1750,245 +1770,342 @@ class _QRViewExampleState extends State<QRViewExample> {
         jsonResult['type'] == 'Contact' ?
         AlertDialog(
           // title: const Text('Dialog Title'),
-          content: Container(
-            margin: const EdgeInsets.only(top: 10),
-            width: MediaQuery.of(context).size.width * 3/4,
-            height: MediaQuery.of(context).size.height * 3/4,
-            child: Column(
-              children: [
-                Flexible(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 15),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text("Contact", style: TextStyle(fontSize: 20)),
-                          GestureDetector(
-                            child: const Icon(Icons.close),
-                            onTap: () {
-                              setState(() {
-                                dialogOpen = false;
-                                vCardTimeStamp = false;
-                                historyItemTapped = false;
-                              });
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                          historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
-                        ]),
+          content: WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: MediaQuery.of(context).size.width * 3/4,
+              height: MediaQuery.of(context).size.height * 3/4,
+              child: Column(
+                children: [
+                  Flexible(
+                    flex: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("Contact", style: TextStyle(fontSize: 20)),
+                            GestureDetector(
+                              child: const Icon(Icons.close),
+                              onTap: () {
+                                setState(() {
+                                  dialogOpen = false;
+                                  vCardTimeStamp = false;
+                                  historyItemTapped = false;
+                                });
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            historyItemTapped? Text(formatDateTime(DateTime.parse(jsonResult['scannedTime']))) : const Icon(Icons.close)
+                          ]),
+                    ),
                   ),
-                ),
-                Flexible(
-                  flex: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('Name', style: TextStyle(fontSize: 20)),
-                            Text('Number', style: TextStyle(fontSize: 20)),
-                            Text('Email', style: TextStyle(fontSize: 20)),
-                            // Text('Address', style: TextStyle(fontSize: 20)),
-                          ],
-                        ),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(': ', style: TextStyle(fontSize: 20)),
-                            Text(': ', style: TextStyle(fontSize: 20)),
-                            Text(': ', style: TextStyle(fontSize: 20)),
-                            // Text(': ', style: TextStyle(fontSize: 20)),
-                          ],
-                        ),
-                        Expanded(
-                          child: Column(
+                  Flexible(
+                    flex: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('Name', style: TextStyle(fontSize: 20)),
+                              Text('Number', style: TextStyle(fontSize: 20)),
+                              Text('Email', style: TextStyle(fontSize: 20)),
+                              // Text('Address', style: TextStyle(fontSize: 20)),
+                            ],
+                          ),
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(jsonResult["FN"] ?? "", style: const TextStyle(fontSize: 20)),
-                              Text(jsonResult["TEL"] ?? "", style: const TextStyle(fontSize: 20)),
-                              Text(jsonResult["EMAIL"] ?? "", style: const TextStyle(fontSize: 20)),
-                              // Text(jsonResult[""],
-                              //     style: TextStyle(fontSize: 20),
-                              //   softWrap: true,
-                              // ),
+                              Text(': ', style: TextStyle(fontSize: 20)),
+                              Text(': ', style: TextStyle(fontSize: 20)),
+                              Text(': ', style: TextStyle(fontSize: 20)),
+                              // Text(': ', style: TextStyle(fontSize: 20)),
                             ],
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(jsonResult["FN"] ?? "", style: const TextStyle(fontSize: 20)),
+                                Text(jsonResult["TEL"] ?? "", style: const TextStyle(fontSize: 20)),
+                                Text(jsonResult["EMAIL"] ?? "", style: const TextStyle(fontSize: 20)),
+                                // Text(jsonResult[""],
+                                //     style: TextStyle(fontSize: 20),
+                                //   softWrap: true,
+                                // ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Flexible(flex: 4,
+                      child: SizedBox(
+                        width: 300,
+                        height: 250,
+                      )),
+                  Flexible(
+                    flex: 1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Visibility(
+                          visible: jsonResult["TEL"] != null,
+                          child: Flexible(
+                            flex: 1,
+                            child: Container(
+                                width: 80,
+                                padding: const EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue, // Background color
+                                  border: Border.all(
+                                    color: Colors.blue, // Border color
+                                    width: 2.0, // Border width
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                      8.0), // Adjust the border radius
+                                ),
+                                child: GestureDetector(onTap: () {
+                                    callPhoneIntent(jsonResult["TEL"]);
+                                },
+                                    child: const Icon(Icons.call))),
+                          ),
+                        ),
+                        Visibility(
+                          visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != ""),
+                              // || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
+                              // || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
+                          child: Flexible(
+                            flex: 1,
+                            child: Container(
+                                width: 80,
+                                padding: const EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue, // Background color
+                                  border: Border.all(
+                                    color: Colors.blue, // Border color
+                                    width: 2.0, // Border width
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                      8.0), // Adjust the border radius
+                                ),
+                                child: GestureDetector(onTap: () {
+                                  callContactsIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
+                                },
+                                    child: const Icon(Icons.add_card_outlined))),
+                          ),
+                        ),
+                        Visibility(
+                          visible: jsonResult["EMAIL"] != null,
+                          child: Flexible(
+                            flex: 1,
+                            child: Container(
+                                width: 80,
+                                padding: const EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue, // Background color
+                                  border: Border.all(
+                                    color: Colors.blue, // Border color
+                                    width: 2.0, // Border width
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                      8.0), // Adjust the border radius
+                                ),
+                                child: GestureDetector(onTap: () {
+                                          callEmailIntent(jsonResult["EMAIL"]);
+                                        },
+                                    child: const Icon(Icons.email))),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const Flexible(flex: 4,
-                    child: SizedBox(
-                      width: 300,
-                      height: 250,
-                    )),
-                Flexible(
-                  flex: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Visibility(
-                        visible: jsonResult["TEL"] != null,
-                        child: Flexible(
-                          flex: 1,
+                  Visibility(
+                    visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != "")
+                        || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
+                        || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
+                    child: Flexible(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            callShareIntent(jsonResult["TEL"] ?? "", jsonResult["EMAIL"] ?? "", jsonResult["FN"] ?? "", jsonResult["type"]);
+                          },
                           child: Container(
-                              width: 80,
-                              padding: const EdgeInsets.all(8.0),
+                              margin: const EdgeInsets.only(top: 40),
+                              alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.blue, // Background color
                                 border: Border.all(
                                   color: Colors.blue, // Border color
                                   width: 2.0, // Border width
                                 ),
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Adjust the border radius
+                                borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
                               ),
-                              child: GestureDetector(onTap: () {
-                                  callPhoneIntent(jsonResult["TEL"]);
-                              },
-                                  child: const Icon(Icons.call))),
+                              width: 300,
+                              height: 50,
+                              child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
                         ),
-                      ),
-                      Visibility(
-                        visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != ""),
-                            // || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
-                            // || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
-                        child: Flexible(
-                          flex: 1,
-                          child: Container(
-                              width: 80,
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                color: Colors.blue, // Background color
-                                border: Border.all(
-                                  color: Colors.blue, // Border color
-                                  width: 2.0, // Border width
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Adjust the border radius
-                              ),
-                              child: GestureDetector(onTap: () {
-                                callContactsIntent(jsonResult["TEL"], jsonResult["EMAIL"], jsonResult["FN"]);
-                              },
-                                  child: const Icon(Icons.add_card_outlined))),
-                        ),
-                      ),
-                      Visibility(
-                        visible: jsonResult["EMAIL"] != null,
-                        child: Flexible(
-                          flex: 1,
-                          child: Container(
-                              width: 80,
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                color: Colors.blue, // Background color
-                                border: Border.all(
-                                  color: Colors.blue, // Border color
-                                  width: 2.0, // Border width
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Adjust the border radius
-                              ),
-                              child: GestureDetector(onTap: () {
-                                        callEmailIntent(jsonResult["EMAIL"]);
-                                      },
-                                  child: const Icon(Icons.email))),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Visibility(
-                  visible: (jsonResult["TEL"] != null && jsonResult["TEL"] != "")
-                      || (jsonResult["EMAIL"] != null && jsonResult["EMAIL"] != "")
-                      || (jsonResult["FN"] != null && jsonResult["FN"] != ""),
-                  child: Flexible(
-                    flex: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          callShareIntent(jsonResult["TEL"] ?? "", jsonResult["EMAIL"] ?? "", jsonResult["FN"] ?? "", jsonResult["type"]);
-                        },
-                        child: Container(
-                            margin: const EdgeInsets.only(top: 40),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.blue, // Border color
-                                width: 2.0, // Border width
-                              ),
-                              borderRadius: BorderRadius.circular(8.0), // Adjust the border radius
-                            ),
-                            width: 300,
-                            height: 50,
-                            child: const Text('Share', style: TextStyle(fontSize: 20,color: Colors.black))),
                       ),
                     ),
-                  ),
-                )
-              ],
+                  )
+                ],
+              ),
             ),
           ),
         )://done
+        jsonResult['type'] == 'upi' ?
         AlertDialog(
           content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width*3/4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex:1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Text'),
-                      GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              dialogOpen = false;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: const Icon(Icons.close)
-                      ),
-                    ],
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(width: 220,
+                          child: Text(jsonResult["URL"],
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 10,),
+                        ),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: const Icon(Icons.close)
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                    flex:3,
-                    child: Text(jsonResult['Blank'] ?? "")),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height * 3/4)/3,
+                  /*Expanded(
+                      flex:3,
+                      child: Text(jsonResult['URL'] ?? "")),*/
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height * 3/4)/3,
+                    ),
                   ),
-                ),
-                Visibility(
-                  visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
-                  child: Expanded(
-                    flex: 1,
-                    child: ElevatedButton(onPressed:() {
-                      copyToClipboard(jsonResult['Blank']);
-                    }, child: const Text('Copy')),
-                  ),
-                ),
-                Visibility(
-                  visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
-                  child: Flexible(
+                  Visibility(
+                    visible: jsonResult['URL'] != null && jsonResult['URL'] != "",
+                    child: Expanded(
                       flex: 1,
                       child: ElevatedButton(onPressed:() {
-                        callIntentText(jsonResult['Blank'], jsonResult['type']);
-                      }, child: const Text('Share'))),
-                )
-              ],
+                        copyToClipboard(jsonResult['URL']);
+                      }, child: const Text('Copy')),
+                    ),
+                  ),
+                  Visibility(
+                    visible: jsonResult['URL'] != null && jsonResult['URL'] != "",
+                    child: Flexible(
+                        flex: 1,
+                        child: ElevatedButton(onPressed:() {
+                          callIntentText(jsonResult['URL'], jsonResult['type']);
+                        }, child: const Text('Share'))),
+                  )
+                ],
+              ),
+            ),
+          ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       //_launchURL(url);
+          //
+          //     },
+          //     child: const Text('Visit Url'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         dialogOpen = false;
+          //       });
+          //       Navigator.of(context).pop();// Close the dialog
+          //     },
+          //     child: const Text('Close'),
+          //   ),
+          // ],
+        ) :
+        AlertDialog(
+          content:
+          WillPopScope(
+            onWillPop: () async {
+              // Return false to prevent the dialog from closing
+              return false;
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height*3/4,
+              width: MediaQuery.of(context).size.width*3/4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex:1,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Text'),
+                        GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                dialogOpen = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: const Icon(Icons.close)
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                      flex:3,
+                      child: Text(jsonResult['Blank'] ?? "")),
+                  Expanded(
+                    flex: 3,
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height * 3/4)/3,
+                    ),
+                  ),
+                  Visibility(
+                    visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
+                    child: Expanded(
+                      flex: 1,
+                      child: ElevatedButton(onPressed:() {
+                        copyToClipboard(jsonResult['Blank']);
+                      }, child: const Text('Copy')),
+                    ),
+                  ),
+                  Visibility(
+                    visible: jsonResult['Blank'] != null && jsonResult['Blank'] != "",
+                    child: Flexible(
+                        flex: 1,
+                        child: ElevatedButton(onPressed:() {
+                          callIntentText(jsonResult['Blank'], jsonResult['type']);
+                        }, child: const Text('Share'))),
+                  )
+                ],
+              ),
             ),
           ),
           // actions: [
@@ -2013,6 +2130,11 @@ class _QRViewExampleState extends State<QRViewExample> {
       },
     );
     await addJsonDataToList(jsonResult);
+    if(jsonResult['type'] == 'URL') {
+      if (await SharedPreferencesHelper().getOpenURLAutoData() == true) {
+        _launchURL(jsonResult['Web Url']);
+      }
+    }
     // await controller!.pauseCamera();
   }
 
@@ -3050,7 +3172,6 @@ class _QRViewExampleState extends State<QRViewExample> {
       "name": name,
       "type": type,
     };
-    print("Share" + map.toString());
     channelShare.invokeMethod("SHARE", map);
   }
 
@@ -3068,7 +3189,6 @@ class _QRViewExampleState extends State<QRViewExample> {
       "url": url,
       "type": type,
     };
-    print("Share" + map.toString());
     channelShare.invokeMethod("SHARE", map);
   }
 
@@ -3243,81 +3363,111 @@ class _SettingsAlertState extends State<SettingsAlert> {
         child:  Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
-                flex: 1,
-                child: Text('Settings',style: TextStyle(fontSize: 30),)),
+            Row(
+              children: [
+                const Expanded(
+                    flex: 1,
+                    child: Center(child: Text('Settings',
+                      style: TextStyle(fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold),))),
+                GestureDetector(
+                    onTap: () {
+                      // Dismiss the AlertDialog
+                      Navigator.pop(context);
+
+                      // Dismiss the BottomSheet
+                      Navigator.of(context).pop();
+                    },
+                    child: Icon(Icons.close, color: Colors.black,)),
+              ],
+            ),
             Expanded(
               flex: 6,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Text(
-                        'Vibrate',
-                      ),
-                      Spacer(),
-                      Switch(
-                        onChanged: toggleSwitchVibrate,
-                        value: isSwitchedVibrate,
-                        activeColor: Colors.white,
-                        activeTrackColor: Theme.of(context).colorScheme.primary,
-                        inactiveThumbColor: Theme.of(context).colorScheme.onError,
-                        inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
-                      )
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Text(
-                        'Open websites\nautomatically',
-                      ),
-                      Spacer(),
-                      Switch(
-                        onChanged: toggleSwitchOpenURLAuto,
-                        value: isSwitchedOpenURL,
-                        activeColor: Colors.white,
-                        activeTrackColor: Theme.of(context).colorScheme.primary,
-                        inactiveThumbColor: Theme.of(context).colorScheme.onError,
-                        inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
-                      )
-                    ],
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(top: 12),
-                    width: double.infinity,
-                    child: TextButton(
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<OutlinedBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(5,50,10,0),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Vibrate',
+                            style: TextStyle(fontSize: 15,
+                                color: Colors.black),),
+                            Text('Vibration feedback for precision',
+                              style: TextStyle(fontSize: 14,
+                                  color: Color(0xFFB2B0B0)
+                              ),
                             ),
-                          ),
-                          backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                          ],
                         ),
-                        onPressed: null,
-                        child: const Text('Clear History',style: TextStyle(color: Colors.white),)),
-                  )
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Container(
-                  // margin: EdgeInsets.only(top: 8),
-                  width: double.infinity,
-                  child: TextButton(
-                      style: ButtonStyle(
-                        shape: MaterialStateProperty.all<OutlinedBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                        Spacer(),
+                        Switch(
+                          onChanged: toggleSwitchVibrate,
+                          value: isSwitchedVibrate,
+                          activeColor: Colors.white,
+                          activeTrackColor: Color(0xFF1976D2),
+                          // inactiveThumbColor: Theme.of(context).colorScheme.onError,
+                          // inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
+                        )
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15.0),
+                      child: Row(
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Open websites automatically',
+                                style: TextStyle(fontSize: 15,
+                                    color: Colors.black
+                                ),
+                              ),Text(
+                                'Instant Website Access for links',
+                                style: TextStyle(fontSize: 14,
+                                    color: Color(0xFFB2B0B0)
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                          Spacer(),
+                          Switch(
+                            onChanged: toggleSwitchOpenURLAuto,
+                            value: isSwitchedOpenURL,
+                            activeColor: Colors.white,
+                            activeTrackColor: Color(0xFF1976D2),
+                            // inactiveThumbColor: Theme.of(context).colorScheme.onError,
+                            // inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
+                          )
+                        ],
                       ),
-                      onPressed: null,
-                      child: const Text('Rate Us',style: TextStyle(color: Colors.white),)),
+                    ),
+                    Container(
+                      margin: EdgeInsets.only(top: 12),
+                      width: double.infinity,
+                      height: 85,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 30.0),
+                        child: TextButton(
+                            style: ButtonStyle(
+                              shape: MaterialStateProperty.all<OutlinedBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                                ),
+                              ),
+                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFFEE2E2)),
+                            ),
+                            onPressed: () {
+                              prefs.clear();
+                            },
+                            child: const Text('Clear History',style: TextStyle(color: Color(0xFFEF4444)),)),
+                      ),
+                    )
+                  ],
                 ),
               ),
             ),
@@ -3335,14 +3485,35 @@ class _SettingsAlertState extends State<SettingsAlert> {
                             borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
                           ),
                         ),
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                        backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFDCFCE7)),
                       ),
                       onPressed: null,
-                      child: const Text('Explore More Apps',style: TextStyle(color: Colors.white),)),
+                      child: const Text('Rate Us',style: TextStyle(color: Color(0xFF22C55E)),)),
                 ),
               ),
             ),
             Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Container(
+                  // margin: EdgeInsets.only(top: 8),
+                  width: double.infinity,
+                  child: TextButton(
+                      style: ButtonStyle(
+                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
+                          ),
+                        ),
+                        backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFCAE3FC)),
+                      ),
+                      onPressed: null,
+                      child: const Text('More Apps Like This',style: TextStyle(color: Color(0xFF1976D2)),)),
+                ),
+              ),
+            ),
+           /* Expanded(
               flex: 1,
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
@@ -3362,7 +3533,7 @@ class _SettingsAlertState extends State<SettingsAlert> {
                       child: const Text('Ad',style: TextStyle(color: Colors.white),)),
                 ),
               ),
-            )
+            )*/
 
           ],
         ),
