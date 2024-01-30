@@ -66,6 +66,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   var channelShare = const MethodChannel("INTENT_SHARE");
   var channelAddEvent = const MethodChannel("INTENT_ADD_EVENT");
   var channelMap = const MethodChannel("INTENT_MAP");
+  var channelUPI = const MethodChannel("INTENT_UPI");
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -920,6 +921,8 @@ class _QRViewExampleState extends State<QRViewExample> {
         }
         else if(scanData.format.toString() =='BarcodeFormat.ean13'){
           type = 'BarCode';
+        } else if(scanData.code.toString().startsWith('upi://pay')) {
+          type = 'upi';
         }
         else{
           type = 'Undefined';
@@ -1174,6 +1177,11 @@ class _QRViewExampleState extends State<QRViewExample> {
         });
         jsonResult['scannedTime'] = DateTime.now().toString();
       }
+    }
+    else if (type == 'upi') {
+      jsonResult = {'URL': url,'type':'upi'};
+      jsonResult['scannedTime'] = DateTime.now().toString();
+      openPaymentURL(jsonResult['URL']);
     }
     else {
       jsonResult = {'Blank': url , 'type': 'Undefined'};//,'scannedTime':DateTime.now().toString()};
@@ -2912,6 +2920,13 @@ class _QRViewExampleState extends State<QRViewExample> {
     channel.invokeMethod("EMAIL", map);
   }
 
+
+  openPaymentURL(String url) {
+    Map map = {
+      "url": url,
+    };
+    channelUPI.invokeMethod("UPI", map);
+  }
   callPhoneIntent(String phone) {
     Map map = {
       "phone": phone,

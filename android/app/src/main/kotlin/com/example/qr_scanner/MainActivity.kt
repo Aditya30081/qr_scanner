@@ -1,14 +1,17 @@
 package com.example.qr_scanner
 
+import android.R.attr.name
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.provider.CalendarContract
 import android.provider.ContactsContract
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -27,6 +30,7 @@ class MainActivity : FlutterActivity() {
     private val intentWifi = "INTENT_WIFI"
     private val intentAddEvent = "INTENT_ADD_EVENT"
     private val intentOpenMap = "INTENT_MAP"
+    private val intentUPI = "INTENT_UPI"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
@@ -39,6 +43,7 @@ class MainActivity : FlutterActivity() {
         val intentWifi = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentWifi)
         val intentAddEvent = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentAddEvent)
         val intentOpenMap = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentOpenMap)
+        val intentUPI = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, intentUPI)
 
         intentEmail.setMethodCallHandler { call, _ ->
 
@@ -266,6 +271,41 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        intentUPI.setMethodCallHandler { call, result ->
+            if (call.method.equals("UPI")) {
+                val upiMap = call.arguments as Map<*, *>
+                val mURL = upiMap["url"] as String
+
+                val payeeVPA = extractPayeeVPA(mURL)
+                val payeeName = extractPayeeName(mURL)
+
+                // will always show a dialog to user to choose an app
+                val uri = Uri.parse("upi://pay").buildUpon()
+                    .appendQueryParameter("pa", payeeVPA)
+                    .appendQueryParameter("pn", payeeName)
+//                    .appendQueryParameter("tn", note)
+//                    .appendQueryParameter("am", amount)
+                    //.appendQueryParameter("cu", "INR")
+                    .build()
+
+                val upiPayIntent = Intent(Intent.ACTION_VIEW)
+                upiPayIntent.setData(uri)
+                // will always show a dialog to user to choose an app
+                val chooser = Intent.createChooser(upiPayIntent, "Pay with")
+
+                // check if intent resolves
+                if (null != chooser.resolveActivity(packageManager)) {
+                    startActivityForResult(chooser, 200)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "No UPI app found, please install one to continue",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+
     }
 
     fun connectToWifi(ssid: String, password: String) {
@@ -296,5 +336,14 @@ class MainActivity : FlutterActivity() {
         } else {
             Log.e("WifiConnector", "Failed to add network configuration")
         }
+    }
+    fun extractPayeeVPA(upiUrl: String): String {
+        val uri = Uri.parse(upiUrl)
+        return uri.getQueryParameter("pa") ?: ""
+    }
+
+    fun extractPayeeName(upiUrl: String): String {
+        val uri = Uri.parse(upiUrl)
+        return uri.getQueryParameter("pn") ?: ""
     }
 }
