@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vibration/vibration.dart';
 
 import 'SharedPreferencesHelper.dart';
+import 'package:wifi_iot/wifi_iot.dart';
 
 
 
@@ -61,6 +62,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   bool barCodeTimeStamp = false;
   bool geoTimeStamp = false;
   var channel = const MethodChannel("INTENT_EMAIL");
+  var channelWifi = const MethodChannel("INTENT_WIFI");
   var channelPhone = const MethodChannel("INTENT_CALL");
   var channelContacts = const MethodChannel("INTENT_ADD_CONTACTS");
   var channelShare = const MethodChannel("INTENT_SHARE");
@@ -124,6 +126,14 @@ class _QRViewExampleState extends State<QRViewExample> {
       body: Stack(
         children: <Widget>[
           _buildQrView(context),
+          Container(
+            child: Column(
+              children: [
+                Text(''),
+                Text('')
+              ],
+            ),
+          ),
           Align(
             alignment:Alignment.bottomCenter,
             child:
@@ -181,7 +191,8 @@ class _QRViewExampleState extends State<QRViewExample> {
                           onPressed: null,
                           //(){_showBottomSheet(context);},
                           icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
-                        Text('Scan History',style: TextStyle(color: Colors.white),)
+                        Text('Scan History',style: TextStyle(color: Colors.white),),
+                        Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),)
                       ],
                     ),
                   ),
@@ -1137,9 +1148,67 @@ class _QRViewExampleState extends State<QRViewExample> {
       return DateFormat('MM/dd/yyyy').format(dateTime);
     }
   }
+  //
+  // void connectToWiFi(String ssid, String password) async {
+  //   try {
+  //     // Check if the device is already connected to a Wi-Fi network
+  //     bool isConnected = await WiFiForIoTPlugin.isConnected();
+  //
+  //     if (!isConnected) {
+  //       // Disconnect from the current network if connected
+  //       await WiFiForIoTPlugin.disconnect();
+  //
+  //       // Connect to the new Wi-Fi network
+  //       WiFiForIoTPlugin.connect(ssid, password, security: NetworkSecurity.WPA, onConnectionChanged: (bool isConnected) {
+  //         if (isConnected) {
+  //           print("Connected to $ssid");
+  //         } else {
+  //           print("Failed to connect to $ssid");
+  //         }
+  //       });
+  //     } else {
+  //       print("Already connected to a Wi-Fi network");
+  //     }
+  //   } catch (e) {
+  //     print("Error: $e");
+  //   }
+  // }
+  void connectToWiFi(String ssid, String password) async {
+    try {
+      // Check if the device is already connected to a Wi-Fi network
+      bool isConnected = await WiFiForIoTPlugin.isConnected();
+      isConnected = false;
+      if (!isConnected) {
+        // Disconnect from the current network if connected
+        await WiFiForIoTPlugin.disconnect();
 
+        // Connect to the new Wi-Fi network
+        await WiFiForIoTPlugin.connect(ssid, security: NetworkSecurity.WPA, password: password ,withInternet: true);
+
+        // Wait for the connection to be established
+        await Future.delayed(Duration(seconds: 5));
+
+        // Check the connection status again
+        isConnected = await WiFiForIoTPlugin.isConnected();
+
+        if (isConnected) {
+          print("Connected to $ssid");
+        } else {
+          print("Failed to connect to $ssid");
+        }
+      } else {
+        print("Already connected to a Wi-Fi network");
+      }
+
+      print("Is connected to Wi-Fi: $isConnected");
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
 
   void _showDialog(BuildContext context,String url,String type) async {
+
+
     print('url'+url);
     Map<String, dynamic> jsonResult;
     if(type == 'VCARD'){
@@ -1343,8 +1412,21 @@ class _QRViewExampleState extends State<QRViewExample> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        ElevatedButton(onPressed: () {
-                          // callWifiIntent(jsonResult['ssid'], jsonResult['password']);
+                        ElevatedButton(onPressed: () async {
+                          print("object" + jsonResult['ssid']);
+                          // await PluginWifiConnect. ;
+                          /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
+                              password: jsonResult['password'],
+                              joinOnce: true,
+                              security: NetworkSecurity.WPA);
+
+*/
+                          // await PluginWifiConnect.connect(ssid);
+                          // bool isConnected =  await WiFiForIoTPlugin.isConnected();
+                          // print("Is connected to Wi-Fi: $isConnected");
+                          connectToWiFi(jsonResult['ssid'],jsonResult['password']);
+                          //(jsonResult['ssid'], jsonResult['password']);
+                          connectWifiChannel(jsonResult['ssid'], jsonResult['password']);
                         }, child: const Text('Connect')),
                         ElevatedButton(onPressed:() {
                           copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
@@ -1923,6 +2005,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       },
     );
     await addJsonDataToList(jsonResult);
+    // await controller!.pauseCamera();
   }
 
   String formatDate(DateTime date,String format) {
@@ -2927,6 +3010,14 @@ class _QRViewExampleState extends State<QRViewExample> {
     };
     channelUPI.invokeMethod("UPI", map);
   }
+  connectWifiChannel(String ssid,String password) {
+    Map map = {
+      "ssid": ssid,
+      "password": password
+    };
+    channelWifi.invokeMethod("WIFI", map);
+  }
+
   callPhoneIntent(String phone) {
     Map map = {
       "phone": phone,

@@ -4,14 +4,23 @@ import android.R.attr.name
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.content.pm.ResolveInfo
 import android.net.Uri
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
+import android.net.wifi.WifiNetworkSpecifier
+import android.os.Build
+import android.os.PatternMatcher
 import android.provider.CalendarContract
 import android.provider.ContactsContract
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -31,6 +40,7 @@ class MainActivity : FlutterActivity() {
     private val intentAddEvent = "INTENT_ADD_EVENT"
     private val intentOpenMap = "INTENT_MAP"
     private val intentUPI = "INTENT_UPI"
+
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
@@ -207,15 +217,24 @@ class MainActivity : FlutterActivity() {
         }
 
         intentWifi.setMethodCallHandler { call, result ->
-            if (call.method.equals("connectToWiFi")) {
+            if (call.method.equals("WIFI")) {
                 val wifiMap = call.arguments as Map<*, *>
                 val ssid: String = wifiMap["ssid"] as String
                 val password: String = wifiMap["password"] as String
                 println("password"+password)
-                connectToWifi(ssid, password)
-            } else {
-                result.notImplemented()
+                //connectToWifi(ssid, password)
+                openWifiSettings()
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//                    //connectToWiFi(ssid, password)
+//                    //openWifiSettings()
+//                }
+//                else {
+//                    connectToWifi(ssid, password)
+//                    openWifiSettings()
+//                    //result.notImplemented()
+//                    }
             }
+
         }
 
         intentOpenMap.setMethodCallHandler { call, _ ->
@@ -309,6 +328,7 @@ class MainActivity : FlutterActivity() {
     }
 
     fun connectToWifi(ssid: String, password: String) {
+        println("reached here reached here")
         val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
         // Check if Wi-Fi is enabled
@@ -323,19 +343,71 @@ class MainActivity : FlutterActivity() {
 
         // Add the network configuration and enable it
         val networkId = wifiManager.addNetwork(wifiConfig)
+        Log.e("networkId",networkId.toString())
+        wifiManager.reconnect()
         if (networkId != -1) {
+
+
             // Disconnect from the current network (optional)
-            wifiManager.disconnect()
-
-            // Enable the network
-            wifiManager.enableNetwork(networkId, true)
-
-            // Reconnect to the selected network
-            wifiManager.reconnect()
-            Log.d("WifiConnector", "Connected to $ssid")
+//            wifiManager.disconnect()
+//
+//            // Enable the network
+//            wifiManager.enableNetwork(networkId, true)
+//
+//            // Reconnect to the selected network
+//            wifiManager.reconnect()
+//            Log.d("WifiConnector", "Connected to $ssid")
         } else {
             Log.e("WifiConnector", "Failed to add network configuration")
         }
+    }
+
+
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    fun connectToWiFiA(ssid:String, pin: String ) {
+        println("reachedAdiAdi")
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as
+                    ConnectivityManager
+        val specifier = WifiNetworkSpecifier.Builder()
+            .setSsid(ssid)
+            .setWpa2Passphrase(pin)
+            .setSsidPattern(PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
+            .build()
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .setNetworkSpecifier(specifier)
+            .build()
+        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                println("success network")
+//                showToast(context,context.getString(R.string.connection_success))
+            }
+
+            override fun onUnavailable() {
+                super.onUnavailable()
+//                showToast(context,context.getString(R.string.connection_fail))
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+//                showToast(context,context.getString(R.string.out_of_range))
+            }
+        }
+        connectivityManager.requestNetwork(request, networkCallback)
+    }
+
+    fun openWifiSettings() {
+        println("wifiPageOpen")
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Intent(WifiManager.ACTION_PICK_WIFI_NETWORK)
+        } else {
+            Intent(Settings.ACTION_WIFI_SETTINGS)
+        }
+        startActivity(intent)
     }
     fun extractPayeeVPA(upiUrl: String): String {
         val uri = Uri.parse(upiUrl)
