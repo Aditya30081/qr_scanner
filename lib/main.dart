@@ -118,12 +118,20 @@ class _QRViewExampleState extends State<QRViewExample> {
       body: Stack(
         children: <Widget>[
           _buildQrView(context),
-          Container(
-            child: Column(
-              children: [
-                Text(''),
-                Text('')
-              ],
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              margin:EdgeInsets.only(top: 50),
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
+              ),
+              child: const Column(
+                children: [
+                  Text('Looking for QR code',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 20),),
+                  Text('Place QR code inside the frame to scan',style: TextStyle(color: Colors.white),)
+                ],
+              ),
             ),
           ),
           Align(
@@ -872,7 +880,7 @@ class _QRViewExampleState extends State<QRViewExample> {
     // For this example we check how width or tall the device is and change the scanArea and overlay accordingly.
     var scanArea = (MediaQuery.of(context).size.width < 400 ||
         MediaQuery.of(context).size.height < 400)
-        ? 150.0
+        ? 200.0
         : 300.0;
     // To ensure the Scanner view is properly sizes after rotation
     // we need to listen for Flutter SizeChanged notification and update controller
@@ -1172,7 +1180,7 @@ class _QRViewExampleState extends State<QRViewExample> {
         await WiFiForIoTPlugin.connect(ssid, security: NetworkSecurity.WPA, password: password ,withInternet: true);
 
         // Wait for the connection to be established
-        await Future.delayed(Duration(seconds: 5));
+        await Future.delayed(const Duration(seconds: 5));
 
         // Check the connection status again
         isConnected = await WiFiForIoTPlugin.isConnected();
@@ -1298,10 +1306,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                       children: [
                         ElevatedButton(onPressed:() {
                           _launchURL(jsonResult['Web Url']);
-                        }, child: Text('Open')),
+                        }, child: const Text('Open')),
                         ElevatedButton(onPressed:() {
                           copyToClipboard(jsonResult['Web Url']);
-                        }, child: Text('Copy')),
+                        }, child: const Text('Copy')),
                       ],
                     ),
                   ),
@@ -1408,7 +1416,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                         }, child: const Text('Connect')),
                         ElevatedButton(onPressed:() {
                           copyToClipboard("SSID: ${jsonResult['ssid'] ?? ""}\nPassword: ${jsonResult['password'] ?? ""}");
-                        }, child: Text('Copy')),
+                        }, child: const Text('Copy')),
                       ],
                     ),
                   ),
@@ -1475,10 +1483,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                       children: [
                         ElevatedButton(onPressed:() {
                           openMap(jsonResult['latitude'].toString(), jsonResult['longitude'].toString());
-                        }, child: Text('Maps')),
+                        }, child: const Text('Maps')),
                         ElevatedButton(onPressed:() {
                           copyToClipboard("Latitude ${jsonResult['latitude']} Longitude ${jsonResult['longitude']}");
-                        }, child: Text('Copy')),
+                        }, child: const Text('Copy')),
                       ],
                     ),
                   ),
@@ -1490,7 +1498,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       flex: 1,
                       child: ElevatedButton(onPressed:() {
                         callIntentGeo(jsonResult['latitude'].toString(), jsonResult['longitude'].toString(), jsonResult['type']);
-                      }, child: Text('Share'))),
+                      }, child: const Text('Share'))),
                 )
               ],
             ),
@@ -1560,7 +1568,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                     flex: 1,
                     child: ElevatedButton(onPressed:() {
                       copyToClipboard(jsonResult['BarCodeData']);
-                    }, child: Text('Copy')),
+                    }, child: const Text('Copy')),
                   ),
                 ),
                 Visibility(
@@ -1569,7 +1577,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       flex: 1,
                       child: ElevatedButton(onPressed:() {
                         callIntentBarCode(jsonResult['BarCodeData'], jsonResult['type']);
-                      }, child: Text('Share'))),
+                      }, child: const Text('Share'))),
                 )
               ],
             ),
@@ -1947,7 +1955,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                     flex: 1,
                     child: ElevatedButton(onPressed:() {
                       copyToClipboard(jsonResult['Blank']);
-                    }, child: Text('Copy')),
+                    }, child: const Text('Copy')),
                   ),
                 ),
                 Visibility(
@@ -1956,7 +1964,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                       flex: 1,
                       child: ElevatedButton(onPressed:() {
                         callIntentText(jsonResult['Blank'], jsonResult['type']);
-                      }, child: Text('Share'))),
+                      }, child: const Text('Share'))),
                 )
               ],
             ),
@@ -2034,7 +2042,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                         ],
                       ),
                       Container(
-                        margin: EdgeInsets.only(top: 12),
+                        margin: const EdgeInsets.only(top: 12),
                         width: double.infinity,
                         child: TextButton(
                             style: ButtonStyle(
@@ -2552,9 +2560,9 @@ class _QRViewExampleState extends State<QRViewExample> {
                   flex: 1,
                   child: ElevatedButton(onPressed:null, child: Text('Copy')),
                 ),
-                Flexible(
+                const Flexible(
                     flex: 1,
-                    child: const ElevatedButton(onPressed:null, child: Text('Share')))
+                    child: ElevatedButton(onPressed:null, child: Text('Share')))
               ],
             ),
           ),
