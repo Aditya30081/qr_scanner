@@ -7,7 +7,6 @@ class SharedPreferencesHelper {
   static const String _openURLAutoKey = "auto";
   static const String _vibratekey = "vibrate";
   static const String _DarkModekey = "mode";
-  static const String _DifficultyLevel = "level";
 
   void saveOpenURLAutoData(bool data) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -41,14 +40,5 @@ class SharedPreferencesHelper {
             : true;
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_DarkModekey) ?? value;
-  }
-  void saveDifficultyLevel(String data) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_DifficultyLevel, data);
-  }
-
-  Future<String> getDifficultyLevel() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_DifficultyLevel) ?? 'Easy';
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -18,7 +19,11 @@ import 'package:wifi_iot/wifi_iot.dart';
 
 late SharedPreferences prefs;
 
-void main() => runApp(const MaterialApp(home: QRViewExample()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await MobileAds.instance.initialize();
+  runApp(const MaterialApp(home: QRViewExample()));
+}
 
 class MyHome extends StatelessWidget {
   const MyHome({Key? key}) : super(key: key);
@@ -72,6 +77,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
   var channelUPI = const MethodChannel("INTENT_UPI");
   late AnimationController _controller;
   late Animation<double> _animation;
+  late AdManagerBannerAd bannerAd;
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -113,6 +119,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
     @override
   void initState() {
     super.initState();
+    loadAd();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -128,6 +135,32 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
     _controller.repeat(reverse: true);
     loadJsonDataList();
   }
+
+  void loadAd() {
+    bannerAd = AdManagerBannerAd(
+      adUnitId: '/21928950349/unibots_alarm_clock_320x100',
+      request: const AdManagerAdRequest(),
+      sizes: [AdSize.banner],
+      listener: AdManagerBannerAdListener(
+        // Called when an ad is successfully received.
+        onAdLoaded: (ad) {
+          setState(() {});
+        },
+        // Called when an ad request failed.
+        onAdFailedToLoad: (ad, err) {
+          // Dispose the ad here to free resources.
+          ad.dispose();
+        },
+        // Called when an ad opens an overlay that covers the screen.
+        onAdOpened: (Ad ad) {},
+        // Called when an ad removes an overlay that covers the screen.
+        onAdClosed: (Ad ad) {},
+        // Called when an impression occurs on the ad.
+        onAdImpression: (Ad ad) {},
+      ),
+    )..load();
+  }
+
 
   Future<void> vibrate() async {
     if (await Vibration.hasVibrator() != null && await Vibration.hasVibrator() == true) {
@@ -177,96 +210,107 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                   ],
                 ),
               ),
-              child:Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child:Column(
                 children: [
-                  ElevatedButton(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton(
 
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: Colors.transparent, // Background color
-                        // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10), // Border radius
-                        ),
-                      ),
-                      onPressed: () async {
-                        await controller?.toggleFlash();
-                        setState(() {});
-                      },
-                      child: FutureBuilder(
-                        future: controller?.getFlashStatus(),
-                        builder: (context, snapshot) {
-                          return SvgPicture.asset(
-                            'assets/flash.svg',
-                            semanticsLabel: 'My SVG Image',
-                            color: Colors.white,
-                          );//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
-                        },
-                      )),
-                  GestureDetector(
-                    onVerticalDragEnd: (details) {
-                      // Check if the swipe is upwards
-                      if (details.primaryVelocity! < 0) {
-                        // Show the bottom sheet
-                        _showBottomSheet(context);
-                      }
-                    },
-                    child: Column(
-                      children: [
-                        AnimatedBuilder(
-                            animation: _animation,
-                            builder: (context, child){
-                            return Transform.translate(
-                              offset: Offset(0, -_animation.value),
-                              child: IconButton(
-                                onPressed: () {
-                                  _showBottomSheet(context);
-                                },
-                                //(){_showBottomSheet(context);},
-                                icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
-                            );
-                        }
-
-                        ),
-                        GestureDetector(
-                            onTap: () {
-                              _showBottomSheet(context);
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.transparent, // Background color
+                            // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10), // Border radius
+                            ),
+                          ),
+                          onPressed: () async {
+                            await controller?.toggleFlash();
+                            setState(() {});
+                          },
+                          child: FutureBuilder(
+                            future: controller?.getFlashStatus(),
+                            builder: (context, snapshot) {
+                              return SvgPicture.asset(
+                                'assets/flash.svg',
+                                semanticsLabel: 'My SVG Image',
+                                color: Colors.white,
+                              );//Text('Flash: ${snapshot.data}',style: const TextStyle(color: Colors.white),);
                             },
-                            child: Text('Scan History',style: TextStyle(color: Colors.white),)),
-                        GestureDetector(
-                            onTap: () {
-                              _showBottomSheet(context);
-                            },
-                            child: Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),))
-                      ],
-                    ),
-                  ),
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: Colors.transparent, // Background color
-                        // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10), // Border radius
-                        ),
-                      ),
-                      onPressed: () async {
-                        await controller?.flipCamera();
-                        setState(() {});
-                      },
-                      child: FutureBuilder(
-                        future: controller?.getCameraInfo(),
-                        builder: (context, snapshot) {
-                          if (snapshot.data != null) {
-                            return const Icon(Icons.cameraswitch,color: Colors.white,);
-                            //Text('Camera facing ${describeEnum(snapshot.data!)}',style: const TextStyle(color: Colors.white),);
-                          } else {
-                            return const Text('loading');
+                          )),
+                      GestureDetector(
+                        onVerticalDragEnd: (details) {
+                          // Check if the swipe is upwards
+                          if (details.primaryVelocity! < 0) {
+                            // Show the bottom sheet
+                            _showBottomSheet(context);
                           }
                         },
-                      )),                ],
+                        child: Column(
+                          children: [
+                            AnimatedBuilder(
+                                animation: _animation,
+                                builder: (context, child){
+                                return Transform.translate(
+                                  offset: Offset(0, -_animation.value),
+                                  child: IconButton(
+                                    onPressed: () {
+                                      _showBottomSheet(context);
+                                    },
+                                    //(){_showBottomSheet(context);},
+                                    icon: Icon(Icons.expand_less,color: Colors.white,size: 34,),),
+                                );
+                            }
+
+                            ),
+                            GestureDetector(
+                                onTap: () {
+                                  _showBottomSheet(context);
+                                },
+                                child: Text('Scan History',style: TextStyle(color: Colors.white),)),
+                            GestureDetector(
+                                onTap: () {
+                                  _showBottomSheet(context);
+                                },
+                                child: Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),)),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.transparent, // Background color
+                            // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10), // Border radius
+                            ),
+                          ),
+                          onPressed: () async {
+                            await controller?.flipCamera();
+                            setState(() {});
+                          },
+                          child: FutureBuilder(
+                            future: controller?.getCameraInfo(),
+                            builder: (context, snapshot) {
+                              if (snapshot.data != null) {
+                                return const Icon(Icons.cameraswitch,color: Colors.white,);
+                                //Text('Camera facing ${describeEnum(snapshot.data!)}',style: const TextStyle(color: Colors.white),);
+                              } else {
+                                return const Text('loading');
+                              }
+                            },
+                          )),
+                    ],
+                  ),
+                  Spacer(),
+                  SizedBox(
+                      width: 320,
+                      height: 50,
+                      child: AdWidget(ad: bannerAd)
+                  )
+                ],
               ),
 
             ),
@@ -3562,6 +3606,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
   @override
   void dispose() {
     controller?.dispose();
+    bannerAd.dispose();
     super.dispose();
   }
 }
@@ -3576,7 +3621,7 @@ class SettingsAlert extends StatefulWidget {
 class _SettingsAlertState extends State<SettingsAlert> {
   final SharedPreferencesHelper prefsHelper = SharedPreferencesHelper();
   bool isSwitchedVibrate = true;
-  bool isSwitchedOpenURL = true;
+  bool isSwitchedOpenURL = false;
 
   getSwitchValues() async {
     isSwitchedVibrate = await prefsHelper.getVibrateData();
