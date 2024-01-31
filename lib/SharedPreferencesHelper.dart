@@ -51,4 +51,18 @@ class SharedPreferencesHelper {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString(_DifficultyLevel) ?? 'Easy';
   }
+
+  Future<void> saveLaunchBool(bool firstTimeLaunch) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    /*bool newStatus = !isFeatureEnabled;*/
+    await prefs.setBool('first_launch', firstTimeLaunch);
+
+  }
+
+  Future<bool> loadFeatureStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstLaunch = prefs.getBool('first_launch')?? true;
+    return isFirstLaunch;
+
+  }
 }

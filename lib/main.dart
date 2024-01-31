@@ -8,6 +8,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import 'package:introduction_screen/introduction_screen.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,11 +18,22 @@ import 'SharedPreferencesHelper.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 
 late SharedPreferences prefs;
+final SharedPreferencesHelper prefsHelper = SharedPreferencesHelper();
 
-void main() => runApp(const MaterialApp(home: QRViewExample()));
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  bool firstTimeLaunch = await prefsHelper.loadFeatureStatus();
+  runApp(
+
+       MaterialApp(home:  firstTimeLaunch ?OnBoardingPage():QRViewExample()));
+
+}
+
 
 class MyHome extends StatelessWidget {
-  const MyHome({Key? key}) : super(key: key);
+  MyHome({Key? key}) : super(key: key);
+
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +84,9 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
   var channelUPI = const MethodChannel("INTENT_UPI");
   late AnimationController _controller;
   late Animation<double> _animation;
+
+  // final SharedPreferencesHelper prefsHelper = SharedPreferencesHelper();
+
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -127,7 +142,10 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
 
     _controller.repeat(reverse: true);
     loadJsonDataList();
+
+
   }
+
 
   Future<void> vibrate() async {
     if (await Vibration.hasVibrator() != null && await Vibration.hasVibrator() == true) {
@@ -260,7 +278,19 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                         future: controller?.getCameraInfo(),
                         builder: (context, snapshot) {
                           if (snapshot.data != null) {
-                            return const Icon(Icons.cameraswitch,color: Colors.white,);
+                            return GestureDetector(
+                              onTap: (){
+                                _showSettingsDialog('launcher');
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: SvgPicture.asset(
+                                  'assets/settings.svg',
+                                  semanticsLabel: 'My SVG Image',
+                                  color: Colors.white,
+                                ),
+                              ),
+                            );
                             //Text('Camera facing ${describeEnum(snapshot.data!)}',style: const TextStyle(color: Colors.white),);
                           } else {
                             return const Text('loading');
@@ -358,7 +388,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                       ),
                       GestureDetector(
                         onTap: (){
-                          _showSettingsDialog();
+                          _showSettingsDialog('history');
                         },
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8),
@@ -390,447 +420,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                     });
                                     print(item);
                                     _showHistoryDialog(context, item, item['type']);
-                                    /*showDialog(
-                                      barrierDismissible: false,
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return item['type'] == 'URL'?
-                                        AlertDialog(
-                                          //backgroundColor: Colors.white,
-                                          content:
-                                          Container(
-                                            color: Colors.white,
-                                            height: MediaQuery.of(context).size.height*3/4,
-                                            width: MediaQuery.of(context).size.width*3/4,
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex:1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text('Url'),
-                                                      Text(DateTime.now().toString()),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                    flex: 1,
-                                                    child: Text('Url Name')),
-                                                const Expanded(
-                                                    flex:3,
-                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: SizedBox(
-                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                  flex: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                                    children: [
-                                                      ElevatedButton(onPressed:null, child: Text('Open')),
-                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Flexible(
-                                                    flex: 1,
-                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                              ],
-                                            ),
-                                          ),
-                                          // actions: [
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       //_launchURL(url);
-                                          //
-                                          //     },
-                                          //     child: const Text('Visit Url'),
-                                          //   ),
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       setState(() {
-                                          //         dialogOpen = false;
-                                          //       });
-                                          //       Navigator.of(context).pop();// Close the dialog
-                                          //     },
-                                          //     child: const Text('Close'),
-                                          //   ),
-                                          // ],
-                                        ):
-                                        item['type'] == 'WIFI' ?
-                                        AlertDialog(
-                                          //backgroundColor: Colors.white,
-                                          content:
-                                          Container(
-                                            color: Colors.white,
-                                            height: MediaQuery.of(context).size.height*3/4,
-                                            width: MediaQuery.of(context).size.width*3/4,
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex:1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text('Wifi'),
-                                                      Text(DateTime.now().toString()),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                    flex: 3,
-                                                    child: Row(
-                                                      children: [
-                                                        Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                                          children: [
-                                                            Text('SSID'),
-                                                            Text('Password'),
-                                                          ],
-                                                        ),
-                                                        Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Text('Aditya'),
-                                                            Text('Adityanand'),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    )),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: SizedBox(
-                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                  flex: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                                    children: [
-                                                      ElevatedButton(onPressed:null, child: Text('Connect')),
-                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Flexible(
-                                                    flex: 1,
-                                                    child: Align(
-                                                        alignment: Alignment.center,
-                                                        child: ElevatedButton(onPressed:null, child: Text('Share'))))
-                                              ],
-                                            ),
-                                          ),
-                                          // actions: [
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       //_launchURL(url);
-                                          //
-                                          //     },
-                                          //     child: const Text('Visit Url'),
-                                          //   ),
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       setState(() {
-                                          //         dialogOpen = false;
-                                          //       });
-                                          //       Navigator.of(context).pop();// Close the dialog
-                                          //     },
-                                          //     child: const Text('Close'),
-                                          //   ),
-                                          // ],
-                                        ) :
-                                        item['type'] == 'Text' ?
-                                        AlertDialog(
-                                          //backgroundColor: Colors.white,
-                                          content:
-                                          Container(
-                                            color: Colors.white,
-                                            height: MediaQuery.of(context).size.height*3/4,
-                                            width: MediaQuery.of(context).size.width*3/4,
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex:1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text('Text'),
-                                                      Text(DateTime.now().toString()),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                    flex:3,
-                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: SizedBox(
-                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                ),
-                                                const Flexible(
-                                                    flex: 1,
-                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                              ],
-                                            ),
-                                          ),
-                                          // actions: [
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       //_launchURL(url);
-                                          //
-                                          //     },
-                                          //     child: const Text('Visit Url'),
-                                          //   ),
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       setState(() {
-                                          //         dialogOpen = false;
-                                          //       });
-                                          //       Navigator.of(context).pop();// Close the dialog
-                                          //     },
-                                          //     child: const Text('Close'),
-                                          //   ),
-                                          // ],
-                                        ) :
-                                        item['type'] == 'Geo' ?
-                                        AlertDialog(
-                                          //backgroundColor: Colors.white,
-                                          content:
-                                          Container(
-                                            color: Colors.white,
-                                            height: MediaQuery.of(context).size.height*3/4,
-                                            width: MediaQuery.of(context).size.width*3/4,
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex:1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text('Geo'),
-                                                      Text(DateTime.now().toString()),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                    flex:3,
-                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: SizedBox(
-                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                  flex: 1,
-                                                  child: Row(
-                                                    children: [
-                                                      ElevatedButton(onPressed:null, child: Text('Maps')),
-                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Flexible(
-                                                    flex: 1,
-                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                              ],
-                                            ),
-                                          ),
-                                          // actions: [
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       //_launchURL(url);
-                                          //
-                                          //     },
-                                          //     child: const Text('Visit Url'),
-                                          //   ),
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       setState(() {
-                                          //         dialogOpen = false;
-                                          //       });
-                                          //       Navigator.of(context).pop();// Close the dialog
-                                          //     },
-                                          //     child: const Text('Close'),
-                                          //   ),
-                                          // ],
-                                        ) :
-                                        item['type'] == 'BarCode' ?
-                                        AlertDialog(
-                                          //backgroundColor: Colors.white,
-                                          content:
-                                          Container(
-                                            color: Colors.white,
-                                            height: MediaQuery.of(context).size.height*3/4,
-                                            width: MediaQuery.of(context).size.width*3/4,
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex:1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text('Barcode'),
-                                                      Text(DateTime.now().toString()),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                    flex:3,
-                                                    child: Text('jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl,jdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisljdliujfpiosjdfoisjdfoisl')),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: SizedBox(
-                                                    height: (MediaQuery.of(context).size.height * 3/4)/3,
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                  flex: 1,
-                                                  child: ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                ),
-                                                const Flexible(
-                                                    flex: 1,
-                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                              ],
-                                            ),
-                                          ),
-                                          // actions: [
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       //_launchURL(url);
-                                          //
-                                          //     },
-                                          //     child: const Text('Visit Url'),
-                                          //   ),
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       setState(() {
-                                          //         dialogOpen = false;
-                                          //       });
-                                          //       Navigator.of(context).pop();// Close the dialog
-                                          //     },
-                                          //     child: const Text('Close'),
-                                          //   ),
-                                          // ],
-                                        ) :
-                                        item['type'] == 'Calendar' ?
-                                        AlertDialog(
-                                          //backgroundColor: Colors.white,
-                                          content:
-                                          Container(
-                                            color: Colors.white,
-                                            height: MediaQuery.of(context).size.height*3/4,
-                                            width: MediaQuery.of(context).size.width*3/4,
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex:1,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text('Calendar'),
-                                                      Text(DateTime.now().toString()),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Expanded(
-                                                    flex:5,
-                                                    child: Row(
-                                                      children: [
-                                                        Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                                          children: [
-                                                            Text('Event Name'),
-                                                            Text('Event Date'),
-                                                            Text('Event Derails'),
-                                                          ],
-                                                        ),
-                                                        Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Text(''),
-                                                            Text(''),
-                                                            Text(''),
-                                                          ],
-                                                        ),
 
-                                                      ],
-                                                    )),
-
-                                                const Expanded(
-                                                  flex: 1,
-                                                  child: Row(
-                                                    children: [
-                                                      ElevatedButton(onPressed:null, child: Text('Calendar')),
-                                                      ElevatedButton(onPressed:null, child: Text('Copy')),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const Flexible(
-                                                    flex: 1,
-                                                    child: ElevatedButton(onPressed:null, child: Text('Share')))
-                                              ],
-                                            ),
-                                          ),
-                                          // actions: [
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       //_launchURL(url);
-                                          //
-                                          //     },
-                                          //     child: const Text('Visit Url'),
-                                          //   ),
-                                          //   TextButton(
-                                          //     onPressed: () {
-                                          //       setState(() {
-                                          //         dialogOpen = false;
-                                          //       });
-                                          //       Navigator.of(context).pop();// Close the dialog
-                                          //     },
-                                          //     child: const Text('Close'),
-                                          //   ),
-                                          // ],
-                                        ) :
-                                        AlertDialog(
-                                          title: const Text('Dialog Title'),
-                                          content: Text(item.toString()),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                //_launchURL(url);
-
-                                              },
-                                              child: const Text('Visit Url'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  dialogOpen = false;
-                                                });
-                                                Navigator.of(context).pop();// Close the dialog
-                                              },
-                                              child: const Text('Close'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );*/
                                   },
                                   child: Container(
                                       height: 80,
@@ -850,24 +440,29 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                               Container(
                                                   margin: const EdgeInsets.only(left: 8,right: 8),
                                                   color: Colors.white,
-                                                  child: const Padding(
+                                                  child:  Padding(
                                                     padding: EdgeInsets.all(8.0),
-                                                    child: Icon(Icons.qr_code,size: 30,),
+                                                    child: SvgPicture.asset(
+                                                      'assets/qr_code.svg',
+                                                      semanticsLabel: 'My SVG Image',
+                                                    ),
                                                   )),
                                               Padding(
                                                 padding: const EdgeInsets.only(top:16,left: 5),
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    item['type']=='WIFI'?Text(item['ssid']?? ''):
+                                                    item['type']=='WIFI'?Text(item['ssid']?? '' ):
                                                     item['type']=='Calendar' ? Text(item['summary']??'') :
                                                     item['type']=='Location'? Text('${item['latitude']??''} , ${item['longitude']?? ''}') :
                                                     item['type']=='BarCode'? Text(item['BarCodeData']):
-                                                    item['type']=='URL'? Text(item['Web Url']):
+                                                    item['type']=='URL'? Container(constraints:BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 1/2),child: Text(item['Web Url'],overflow: TextOverflow.ellipsis,)):
+                                                    item['type']=='Contact'? Text(item['FN']):
+                                                    item['type']=='upi'? Container( constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 1/2), child: Text(item['URL'],overflow: TextOverflow.ellipsis,/*maxLines: 2,*/)):
                                                     item['type']=='Undefined'? const Text('unknown') :const Text('hi'),
                                                     Padding(
                                                       padding: const EdgeInsets.only(top:8.0),
-                                                      child: Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,),
+                                                      child: Text(item['type'] ?? 'Text',overflow:TextOverflow.ellipsis,style: TextStyle(color: Color(0xFFB2B0B0)),),
                                                     ),
                                                   ],
                                                 ),
@@ -876,7 +471,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
-                                            child: Text(formatDateTime(DateTime.parse(item['scannedTime'])),),
+                                            child: Text(formatDateTime(DateTime.parse(item['scannedTime'])),style: TextStyle(color: Color(0xFFB2B0B0)),),
                                           )
                                         ],
                                       ))),
@@ -901,40 +496,6 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
     );
   }
 
-
-
-
-
-
-
-  // Widget _buildTransparentOverlayBottomSheet() {
-  //   return Positioned(
-  //     bottom: 0,
-  //     left: 0,
-  //     right: 0,
-  //     child: Container(
-  //       color: const Color(0xff21212114),
-  //       child: Padding(
-  //         padding: const EdgeInsets.all(16.0),
-  //         child: Column(
-  //           crossAxisAlignment: CrossAxisAlignment.stretch,
-  //           children: [
-  //             const Text(
-  //               'Overlay Bottom Sheet Content',
-  //               style: TextStyle(color: Colors.white),
-  //             ),
-  //             ElevatedButton(
-  //               onPressed: () {
-  //                 // Handle button click inside the bottom sheet
-  //               },
-  //               child: const Text('Click Me'),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
   Widget _buildQrView(BuildContext context) {
     // For this example we check how width or tall the device is and change the scanArea and overlay accordingly.
     var scanArea = (MediaQuery.of(context).size.width < 400 ||
@@ -1005,8 +566,6 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
       print("aditya${scanData.code!} type ${scanData.format}");
     });
   }
-  // String vcardString =
-  //     "BEGIN:VCARD\nVERSION:3.0\nN:raheja;adityanand \nFN:adityanand  raheja\nTEL;CELL:8766257408\nEMAIL;WORK;INTERNET:adityanand.raheja@unibots.com\nEND:VCARD";
 
   Map<String, dynamic> vCardToJSON(String vCardData) {
     // Split vCard data into lines
@@ -1207,31 +766,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
       return DateFormat('MM/dd/yyyy').format(dateTime);
     }
   }
-  //
-  // void connectToWiFi(String ssid, String password) async {
-  //   try {
-  //     // Check if the device is already connected to a Wi-Fi network
-  //     bool isConnected = await WiFiForIoTPlugin.isConnected();
-  //
-  //     if (!isConnected) {
-  //       // Disconnect from the current network if connected
-  //       await WiFiForIoTPlugin.disconnect();
-  //
-  //       // Connect to the new Wi-Fi network
-  //       WiFiForIoTPlugin.connect(ssid, password, security: NetworkSecurity.WPA, onConnectionChanged: (bool isConnected) {
-  //         if (isConnected) {
-  //           print("Connected to $ssid");
-  //         } else {
-  //           print("Failed to connect to $ssid");
-  //         }
-  //       });
-  //     } else {
-  //       print("Already connected to a Wi-Fi network");
-  //     }
-  //   } catch (e) {
-  //     print("Error: $e");
-  //   }
-  // }
+
   void connectToWiFi(String ssid, String password) async {
     try {
       // Check if the device is already connected to a Wi-Fi network
@@ -2416,206 +1951,16 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
     return formatter.format(date);
   }
 
-  void _showSettingsDialog(){
+  void _showSettingsDialog(String history){
 
     print('show dialog');
     showDialog(
       barrierDismissible: false,
       context: context,
       builder:(BuildContext context) {
-        return const SettingsAlert();
-        /*AlertDialog(
-          //backgroundColor: Colors.white,
-          content:
-          Container(
-            height: MediaQuery.of(context).size.height*3/4,
-            width: MediaQuery.of(context).size.width,
-            child:  Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Expanded(
-                  flex: 1,
-                    child: Text('Settings',style: TextStyle(fontSize: 30),)),
-                Expanded(
-                  flex: 6,
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Vibrate',
-                          ),
-                          Spacer(),
-                          Switch(
-                            onChanged: toggleSwitchVibrate,
-                            value: isSwitchedVibrate,
-                            activeColor: Colors.white,
-                            activeTrackColor: Theme.of(context).colorScheme.primary,
-                            inactiveThumbColor: Theme.of(context).colorScheme.onError,
-                            inactiveTrackColor: Theme.of(context).colorScheme.onBackground,
-                          )
-                        ],
-                      ),
-                      const Row(
-                        children: [
-                          Text(
-                            'Open websites\nautomatically',
-                          ),
-                          Spacer(),
-                          Switch(value: true, onChanged: null)
-                        ],
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(top: 12),
-                        width: double.infinity,
-                        child: TextButton(
-                            style: ButtonStyle(
-                              shape: MaterialStateProperty.all<OutlinedBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
-                                ),
-                              ),
-                              backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
-                            ),
-                            onPressed: null,
-                            child: const Text('Clear History',style: TextStyle(color: Colors.white),)),
-                      )
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Container(
-                      // margin: EdgeInsets.only(top: 8),
-                      width: double.infinity,
-                      child: TextButton(
-                          style: ButtonStyle(
-                            shape: MaterialStateProperty.all<OutlinedBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
-                              ),
-                            ),
-                            backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
-                          ),
-                          onPressed: null,
-                          child: const Text('Rate Us',style: TextStyle(color: Colors.white),)),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Container(
-                      // margin: EdgeInsets.only(top: 8),
-                      width: double.infinity,
-                      child: TextButton(
-                          style: ButtonStyle(
-                            shape: MaterialStateProperty.all<OutlinedBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
-                              ),
-                            ),
-                            backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                          ),
-                          onPressed: null,
-                          child: const Text('Explore More Apps',style: TextStyle(color: Colors.white),)),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Container(
-                      // margin: EdgeInsets.only(top: 8),
-                      width: double.infinity,
-                      child: TextButton(
-                          style: ButtonStyle(
-                            shape: MaterialStateProperty.all<OutlinedBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0), // Set your desired border radius
-                              ),
-                            ),
-                            backgroundColor: MaterialStateProperty.all<Color>(Colors.yellow),
-                          ),
-                          onPressed: null,
-                          child: const Text('Ad',style: TextStyle(color: Colors.white),)),
-                    ),
-                  ),
-                )
+        return SettingsAlert(type: history,);
 
-              ],
-            ),
-          ),
-        );*/
-
-        /*AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Container(
-              margin: const EdgeInsets.only(top: 10),
-              width: MediaQuery.of(context).size.width * 3/4,
-              height: MediaQuery.of(context).size.height * 3/4,
-              child: Column(
-                children: [
-                  Text(jsonResult['Blank']),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        dialogOpen = false;
-                      });
-                      Navigator.of(context).pop();// Close the dialog
-                    },
-                    child: const Text('Close'),
-                  ),
-                ],
-              )),
-          // actions: [
-          //   // TextButton(
-          //   //   onPressed: () {
-          //   //     //_launchURL(url);
-          //   //
-          //   //   },
-          //   //   child: const Text('Visit Url'),
-          //   // ),
-          //   // TextButton(
-          //   //   onPressed: () {
-          //   //     setState(() {
-          //   //       dialogOpen = false;
-          //   //     });
-          //   //     Navigator.of(context).pop();// Close the dialog
-          //   //   },
-          //   //   child: const Text('Close'),
-          //   // ),
-          // ],
-        );*/
       },
-      /*(BuildContext context) {
-        return AlertDialog(
-          title: const Text('Dialog Title'),
-          content: Text(jsonResult.toString()),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _launchURL(url);
-
-              },
-              child: const Text('Visit Url'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  dialogOpen = false;
-                });
-                Navigator.of(context).pop();// Close the dialog
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },*/
     );
   }
 
@@ -3302,39 +2647,36 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
               children: [
                 Flexible(
                   flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 15),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                              child: Container(
-                                  child:  Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Text("Contact", style: TextStyle(fontSize: 24)),
-                                          Text(formatDateTime(DateTime.parse(url['scannedTime'])))
-                                        ],
-                                      )))),
-                          GestureDetector(
-                            child: const Icon(Icons.close),
-                            onTap: () {
-                              setState(() {
-                                dialogOpen = false;
-                                vCardTimeStamp = false;
-                                historyItemTapped = false;
-                              });
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ]),
-                  ),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                            child: Container(
+                                child:  Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Text("Contact", style: TextStyle(fontSize: 24)),
+                                        Text(formatDateTime(DateTime.parse(url['scannedTime'])))
+                                      ],
+                                    )))),
+                        GestureDetector(
+                          child: const Icon(Icons.close),
+                          onTap: () {
+                            setState(() {
+                              dialogOpen = false;
+                              vCardTimeStamp = false;
+                              historyItemTapped = false;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ]),
                 ),
                 Flexible(
                   flex: 4,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(8, 15, 8, 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -3788,15 +3130,6 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
     channelShare.invokeMethod("SHARE", map);
   }
 
-/*
-  callWifiIntent(String ssid, String password) {
-    Map map = {
-      "ssid": ssid,
-      "password": password,
-    };
-    channelWifi.invokeMethod("connectToWiFi", map);
-  }
-*/
 
   callIntentBarCode(String barcode, String type) {
     Map map = {
@@ -3892,8 +3225,8 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
 }
 
 class SettingsAlert extends StatefulWidget {
-  const SettingsAlert({super.key});
-
+  final String? type;
+  const SettingsAlert({super.key, this.type});
   @override
   State<SettingsAlert> createState() => _SettingsAlertState();
 }
@@ -3973,7 +3306,7 @@ class _SettingsAlertState extends State<SettingsAlert> {
                       Navigator.pop(context);
 
                       // Dismiss the BottomSheet
-                      Navigator.of(context).pop();
+                      widget.type == 'history'?Navigator.of(context).pop():(){};
                     },
                     child: const Icon(Icons.close, color: Colors.black,)),
               ],
@@ -4139,6 +3472,216 @@ class _SettingsAlertState extends State<SettingsAlert> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class OnBoardingPage extends StatefulWidget {
+  const OnBoardingPage({Key? key}) : super(key: key);
+
+  @override
+  OnBoardingPageState createState() => OnBoardingPageState();
+}
+
+class OnBoardingPageState extends State<OnBoardingPage> {
+  final introKey = GlobalKey<IntroductionScreenState>();
+
+  void _onIntroEnd(context) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const QRViewExample()),
+    );
+  }
+
+  Widget _buildFullscreenImage() {
+    return Image.asset(
+      'assets/back.jpg',
+      fit: BoxFit.cover,
+      height: double.infinity,
+      width: double.infinity,
+      alignment: Alignment.center,
+    );
+  }
+
+  Widget _buildImage(String assetName, [double width = 350]) {
+    return Image.asset('assets/$assetName', width: width);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const bodyStyle = TextStyle(fontSize: 19.0);
+
+    const pageDecoration = PageDecoration(
+      titleTextStyle: TextStyle(fontSize: 28.0, fontWeight: FontWeight.w700),
+      bodyTextStyle: bodyStyle,
+      bodyPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+      pageColor: Colors.white,
+      imagePadding: EdgeInsets.zero,
+    );
+
+    return IntroductionScreen(
+      key: introKey,
+      globalBackgroundColor: Colors.white,
+      allowImplicitScrolling: true,
+      autoScrollDuration: 3000,
+      infiniteAutoScroll: true,
+      /*globalHeader: Align(
+        alignment: Alignment.topRight,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16, right: 16),
+            child: _buildImage('header.jpg', 100),
+          ),
+        ),
+      ),*/
+      /*globalFooter: SizedBox(
+        width: double.infinity,
+        height: 60,
+        child: ElevatedButton(
+          child: const Text(
+            'Let\'s go right away!',
+            style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+          ),
+          onPressed: () => _onIntroEnd(context),
+        ),
+      ),*/
+      pages: [
+        PageViewModel(
+          title: "Welcome",
+          body:
+          "Effortless QR scanning with our user-friendly app.",
+          image: Padding(
+            padding: const EdgeInsets.only(top:150.0),
+            child: _buildImage('first.png'),
+          ),
+          decoration: pageDecoration,
+        ),
+        PageViewModel(
+          title: "Stylish Minimalism, Maximum Functionality",
+          body:
+          "Scan with style - our app combines trendiness with efficiency.",
+          image: Padding(
+            padding: const EdgeInsets.only(top:150.0),
+            child: _buildImage('second.png'),
+          ),
+          decoration: pageDecoration,
+        ),
+        PageViewModel(
+          title: "Explore the Power",
+          body:
+          "Sleek design, powerful scanning – Stay connected and explore seamlessly.",
+          image: Padding(
+            padding: const EdgeInsets.only(top:150.0),
+            child: _buildImage('three.png'),
+          ),
+          decoration: pageDecoration,
+        ),
+        /*PageViewModel(
+          title: "Full Screen Page",
+          body:
+          "Pages can be full screen as well.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc id euismod lectus, non tempor felis. Nam rutrum rhoncus est ac venenatis.",
+          image: _buildFullscreenImage(),
+          decoration: pageDecoration.copyWith(
+            contentMargin: const EdgeInsets.symmetric(horizontal: 16),
+            fullScreen: true,
+            bodyFlex: 2,
+            imageFlex: 3,
+            safeArea: 100,
+          ),
+        ),
+        PageViewModel(
+          title: "Another title page",
+          body: "Another beautiful body text for this example onboarding",
+          image: _buildImage('img2.jpg'),
+          footer: ElevatedButton(
+            onPressed: () {
+              introKey.currentState?.animateScroll(0);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            child: const Text(
+              'FooButton',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          decoration: pageDecoration.copyWith(
+            bodyFlex: 6,
+            imageFlex: 6,
+            safeArea: 80,
+          ),
+        ),
+        PageViewModel(
+          title: "Title of last page - reversed",
+          bodyWidget: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Click on ", style: bodyStyle),
+              Icon(Icons.edit),
+              Text(" to edit a post", style: bodyStyle),
+            ],
+          ),
+          decoration: pageDecoration.copyWith(
+            bodyFlex: 2,
+            imageFlex: 4,
+            bodyAlignment: Alignment.bottomCenter,
+            imageAlignment: Alignment.topCenter,
+          ),
+          image: _buildImage('img1.jpg'),
+          reverse: true,
+        ),*/
+      ],
+      onDone: () {
+        _onIntroEnd(context);
+        prefsHelper.saveLaunchBool(false);
+        },
+      onSkip: () {
+
+        _onIntroEnd(context);
+        prefsHelper.saveLaunchBool(false);
+      }, // You can override onSkip callback
+      showSkipButton: true,
+      skipOrBackFlex: 0,
+      nextFlex: 0,
+      showBackButton: false,
+      //rtl: true, // Display as right-to-left
+      back: const Icon(Icons.arrow_back),
+      skip: const Text('Skip', style: TextStyle(fontWeight: FontWeight.w600)),
+      next: const Icon(Icons.arrow_forward),
+      done: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
+      curve: Curves.fastLinearToSlowEaseIn,
+      controlsMargin: const EdgeInsets.all(16),
+      controlsPadding: kIsWeb
+          ? const EdgeInsets.all(12.0)
+          : const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 4.0),
+      dotsDecorator: const DotsDecorator(
+        size: Size(10.0, 10.0),
+        color: Color(0xFFBDBDBD),
+        activeSize: Size(22.0, 10.0),
+        activeShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(25.0)),
+        ),
+      ),
+      dotsContainerDecorator: const ShapeDecoration(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8.0)),
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home')),
+      body: const Center(child: Text("This is the screen after Introduction")),
     );
   }
 }
