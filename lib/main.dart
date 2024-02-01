@@ -28,12 +28,13 @@ void main() async{
   runApp(
 
        MaterialApp(home:  firstTimeLaunch ?OnBoardingPage():QRViewExample()));
+}
 
-void main() async {
+/*void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await MobileAds.instance.initialize();
   runApp(const MaterialApp(home: QRViewExample()));
-}
+}*/
 
 class MyHome extends StatelessWidget {
   MyHome({Key? key}) : super(key: key);
@@ -281,37 +282,50 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                 );
                             }
 
-                            ),
-                            GestureDetector(
-                                onTap: () {
-                                  _showBottomSheet(context);
-                                },
-                                child: Text('Scan History',style: TextStyle(color: Colors.white),)),
-                            GestureDetector(
-                                onTap: () {
-                                  _showBottomSheet(context);
-                                },
-                                child: Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),)),
-                          ],
+                        ),
+                        GestureDetector(
+                            onTap: () {
+                              _showBottomSheet(context);
+                            },
+                            child: Text('Scan History',style: TextStyle(color: Colors.white),)),
+                        GestureDetector(
+                            onTap: () {
+                              _showBottomSheet(context);
+                            },
+                            child: Text('Swipe up',style: TextStyle(color: Colors.white,fontSize: 10),))
+                      ],
+                    ),
+                  ),
+                    GestureDetector(
+                      onTap: (){
+                        _showSettingsDialog('launcher');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: SvgPicture.asset(
+                          'assets/settings.svg',
+                          semanticsLabel: 'My SVG Image',
+                          color: Colors.white,
                         ),
                       ),
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: Colors.transparent, // Background color
-                            // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10), // Border radius
-                            ),
-                          ),
-                          onPressed: () async {
-                            await controller?.flipCamera();
-                            setState(() {});
-                          },
-                          child: FutureBuilder(
-                            future: controller?.getCameraInfo(),
-                            builder: (context, snapshot) {
-                              if (snapshot.data != null) {
+                    ),
+                  /*ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: Colors.transparent, // Background color
+                        // padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10), // Border radius
+                        ),
+                      ),
+                      onPressed: () async {
+                        await controller?.flipCamera();
+                        setState(() {});
+                      },
+                      child: FutureBuilder(
+                        future: controller?.getCameraInfo(),
+                        builder: (context, snapshot) {
+                          if (snapshot.data != null) {
                             return GestureDetector(
                               onTap: (){
                                 _showSettingsDialog('launcher');
@@ -330,7 +344,7 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                 return const Text('loading');
                               }
                             },
-                          )),
+                          )),*/
                     ],
                   ),
                   Spacer(),
@@ -1119,12 +1133,11 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                 onPressed: () async {
                             print("object" + jsonResult['ssid']);
                             // await PluginWifiConnect. ;
-                            /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
+   WiFiForIoTPlugin.connect(jsonResult['ssid'],
                                 password: jsonResult['password'],
                                 joinOnce: true,
                                 security: NetworkSecurity.WPA);
 
-            */
                             // await PluginWifiConnect.connect(ssid);
                             // bool isConnected =  await WiFiForIoTPlugin.isConnected();
                             // print("Is connected to Wi-Fi: $isConnected");
@@ -2235,12 +2248,12 @@ class _QRViewExampleState extends State<QRViewExample> with SingleTickerProvider
                                 onPressed: () async {
                                   print("object" + url['ssid']);
                                   // await PluginWifiConnect. ;
-                                  /* WiFiForIoTPlugin.connect(jsonResult['ssid'],
+ /*  WiFiForIoTPlugin.connect(jsonResult['ssid'],
                                 password: jsonResult['password'],
                                 joinOnce: true,
-                                security: NetworkSecurity.WPA);
+                                security: NetworkSecurity.WPA);*/
 
-            */
+
                                   // await PluginWifiConnect.connect(ssid);
                                   // bool isConnected =  await WiFiForIoTPlugin.isConnected();
                                   // print("Is connected to Wi-Fi: $isConnected");
@@ -3341,9 +3354,9 @@ class _SettingsAlertState extends State<SettingsAlert> {
                 const Expanded(
                     flex: 1,
                     child: Center(child: Text('Settings',
-                      style: TextStyle(fontSize: 20,
+                      style: TextStyle(fontSize: 24,
                           color: Colors.black,
-                          fontWeight: FontWeight.bold),))),
+                          /*fontWeight: FontWeight.bold*/),))),
                 GestureDetector(
                     onTap: () {
                       // Dismiss the AlertDialog
@@ -3358,7 +3371,7 @@ class _SettingsAlertState extends State<SettingsAlert> {
             Expanded(
               flex: 6,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(5,50,10,0),
+                padding: const EdgeInsets.fromLTRB(5,50,0,0),
                 child: Column(
                   children: [
                     Row(
@@ -3568,7 +3581,7 @@ class OnBoardingPageState extends State<OnBoardingPage> {
       allowImplicitScrolling: true,
       autoScrollDuration: 3000,
       infiniteAutoScroll: true,
-      /*globalHeader: Align(
+  /*globalHeader: Align(
         alignment: Alignment.topRight,
         child: SafeArea(
           child: Padding(
@@ -3577,7 +3590,9 @@ class OnBoardingPageState extends State<OnBoardingPage> {
           ),
         ),
       ),*/
-      /*globalFooter: SizedBox(
+  /*
+      */
+  /*globalFooter: SizedBox(
         width: double.infinity,
         height: 60,
         child: ElevatedButton(
@@ -3619,7 +3634,7 @@ class OnBoardingPageState extends State<OnBoardingPage> {
           ),
           decoration: pageDecoration,
         ),
-        /*PageViewModel(
+  /*PageViewModel(
           title: "Full Screen Page",
           body:
           "Pages can be full screen as well.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc id euismod lectus, non tempor felis. Nam rutrum rhoncus est ac venenatis.",
@@ -3718,7 +3733,7 @@ class OnBoardingPageState extends State<OnBoardingPage> {
   }
 }
 
-class HomePage extends StatelessWidget {
+/*class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
@@ -3728,4 +3743,4 @@ class HomePage extends StatelessWidget {
       body: const Center(child: Text("This is the screen after Introduction")),
     );
   }
-}
+}*/
